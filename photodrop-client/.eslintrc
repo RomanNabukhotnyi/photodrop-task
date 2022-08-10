@@ -4,8 +4,8 @@
     ],
     "plugins": ["import"],
     "parserOptions": {
-        "project": ["tsconfig.json"],
-        "tsconfigRootDir": "."
+        "project": "tsconfig.json",
+        "tsconfigRootDir": "./photodrop-client"
     },
     "rules": {
         "indent": "off",
