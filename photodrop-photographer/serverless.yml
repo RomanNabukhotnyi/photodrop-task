@@ -1,0 +1,157 @@
+service: photodrop-photographer
+frameworkVersion: "3"
+plugins:
+  - serverless-webpack
+useDotenv: true
+provider:
+  name: aws
+  runtime: nodejs14.x
+  apiGateway:
+    minimumCompressionSize: 1024
+    shouldStartNameWithService: true
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    NODE_OPTIONS: --enable-source-maps --stack-trace-limit=1000
+    PHOTOGRAPHERS_TABLE_NAME: ${self:custom.photographersTableName}
+    PHOTOGRAPHER_PHOTOS_TABLE_NAME: ${self:custom.photographerPhotosTableName}
+    CLIENT_PHOTOS_TABLE_NAME: ${self:custom.clientPhotosTableName}
+    BUCKET_NAME: ${self:custom.bucketName}
+    ACCES_SECRET: ${env:ACCES_SECRET}
+    REFRESH_SECRET: ${env:REFRESH_SECRET}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:*
+        - cognito-idp:*
+        - dynamodb:*
+      Resource: "*"
+
+functions:
+    verifyToken:
+      handler: src/functions/verifyToken/handler.main
+
+    signup:
+      handler: src/functions/signup/handler.main
+      events:
+        - http:
+            path: /signup
+            method: post
+            cors: true
+    
+    login:
+      handler: src/functions/login/handler.main
+      events:
+        - http:
+            path: /login
+            method: post
+            cors: true
+
+    createAlbum:
+      handler: src/functions/createAlbum/handler.main
+      events:
+        - http:
+            path: /albums
+            method: post
+            cors: true
+            authorizer:
+              name: verifyToken
+              identitySource: method.request.header.Authorization
+              resultTtlInSeconds: 0
+
+    getPresignedUrl:
+      handler: src/functions/getPresignedUrl/handler.main
+      events:
+        - http:
+            path: /getPresignedUrl
+            method: post
+            cors: true
+            authorizer:
+              name: verifyToken
+              identitySource: method.request.header.Authorization
+              resultTtlInSeconds: 0
+
+    getListAlbums:
+      handler: src/functions/getListAlbums/handler.main
+      events:
+        - http:
+            path: /albums
+            method: get
+            cors: true
+            authorizer:
+              name: verifyToken
+              identitySource: method.request.header.Authorization
+              resultTtlInSeconds: 0
+
+    getAlbum:
+      handler: src/functions/getAlbum/handler.main
+      events:
+        - http:
+            path: /albums/{albumName}
+            method: get
+            cors: true
+            authorizer:
+              name: verifyToken
+              identitySource: method.request.header.Authorization
+              resultTtlInSeconds: 0
+
+# package:
+#   individually: true
+
+custom:
+  photographersTableName: photographers-table
+  photographerPhotosTableName: photographer-photos-table
+  clientPhotosTableName: client-photos-table
+  bucketName: photodrop-photos-bucket
+  webpack:
+    webpackConfig: webpack.config.ts
+    includeModules: true
+    packager: npm
+
+resources:
+  Resources:
+    PhotographersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.photographersTableName}
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+    PhotographerPhotosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.photographerPhotosTableName}
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+          - AttributeName: albumName
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+          - AttributeName: albumName
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+    ClientPhotosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.clientPhotosTableName}
+        AttributeDefinitions:
+          - AttributeName: number
+            AttributeType: S
+          - AttributeName: albumName
+            AttributeType: S
+        KeySchema:
+          - AttributeName: number
+            KeyType: HASH
+          - AttributeName: albumName
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+    Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
+        AccessControl: PublicRead

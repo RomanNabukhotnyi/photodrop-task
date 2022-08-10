@@ -1,0 +1,153 @@
+service: photodrop-client
+frameworkVersion: "3"
+plugins:
+  - serverless-webpack
+useDotenv: true
+provider:
+  name: aws
+  runtime: nodejs14.x
+  apiGateway:
+    minimumCompressionSize: 1024
+    shouldStartNameWithService: true
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    NODE_OPTIONS: --enable-source-maps --stack-trace-limit=1000
+    CLIENTS_TABLE_NAME: ${self:custom.clientsTableName}
+    CLIENT_PHOTOS_TABLE_NAME: ${self:custom.clientPhotosTableName}
+    BUCKET_NAME: ${self:custom.bucketName}
+    SECRET: ${env:SECRET}
+    TOKEN: ${env:TOKEN}
+    CHAT_ID: ${env:CHAT_ID}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:*
+        - dynamodb:*
+      Resource: "*"
+
+functions:
+    verifyToken:
+      handler: src/functions/verifyToken/handler.main
+
+    sendOtp:
+      handler: src/functions/sendOtp/handler.main
+      events:
+        - http:
+            path: /sendOtp
+            method: post
+            cors: true
+    
+    verifyOtp:
+      handler: src/functions/verifyOtp/handler.main
+      events:
+        - http:
+            path: /verifyOtp
+            method: post
+            cors: true
+
+    getPresignedUrl:
+      handler: src/functions/getPresignedUrl/handler.main
+      events:
+        - http:
+            path: /getPresignedUrl
+            method: get
+            request:
+              parameters:
+                querystrings:
+                  fileName: false
+            cors: true
+            authorizer:
+              name: verifyToken
+              identitySource: method.request.header.Authorization
+              resultTtlInSeconds: 0
+
+    updateClient:
+      handler: src/functions/updateClient/handler.main
+      events:
+        - http:
+            path: /client
+            method: put
+            cors: true
+            authorizer:
+              name: verifyToken
+              identitySource: method.request.header.Authorization
+              resultTtlInSeconds: 0
+
+    getClient:
+      handler: src/functions/getClient/handler.main
+      events:
+        - http:
+            path: /client
+            method: get
+            cors: true
+            authorizer:
+              name: verifyToken
+              identitySource: method.request.header.Authorization
+              resultTtlInSeconds: 0
+
+    getListAlbums:
+      handler: src/functions/getListAlbums/handler.main
+      events:
+        - http:
+            path: /albums
+            method: get
+            cors: true
+            authorizer:
+              name: verifyToken
+              identitySource: method.request.header.Authorization
+              resultTtlInSeconds: 0
+
+    removeWatermark:
+      handler: src/functions/removeWatermark/handler.main
+      events:
+        - http:
+            path: /removeWatermark
+            method: post
+            cors: true
+            authorizer:
+              name: verifyToken
+              identitySource: method.request.header.Authorization
+              resultTtlInSeconds: 0
+
+    getAlbum:
+      handler: src/functions/getAlbum/handler.main
+      events:
+        - http:
+            path: /albums/{albumName}
+            method: get
+            cors: true
+            authorizer:
+              name: verifyToken
+              identitySource: method.request.header.Authorization
+              resultTtlInSeconds: 0
+
+# package:
+#   individually: true
+
+custom:
+  clientsTableName: clients-table
+  clientPhotosTableName: client-photos-table
+  bucketName: photodrop-client-bucket
+  webpack:
+    webpackConfig: webpack.config.ts
+    includeModules: true
+    packager: npm
+
+resources:
+  Resources:
+    ClientsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.clientsTableName}
+        AttributeDefinitions:
+          - AttributeName: number
+            AttributeType: S
+        KeySchema:
+          - AttributeName: number
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+    Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
+        AccessControl: PublicRead
