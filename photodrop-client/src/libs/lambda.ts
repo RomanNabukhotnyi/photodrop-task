@@ -1,7 +1,7 @@
 import middy from '@middy/core';
 import middyJsonBodyParser from '@middy/http-json-body-parser';
 import httpErrorHandler from '@middy/http-error-handler';
-import httpMultipartBodyParser from '@middy/http-multipart-body-parser';
+import cors from '@middy/http-cors';
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Handler } from 'aws-lambda';
 
 const middleware = ():middy.MiddlewareObj<APIGatewayProxyEvent, APIGatewayProxyResult> => {
@@ -23,7 +23,7 @@ const middleware = ():middy.MiddlewareObj<APIGatewayProxyEvent, APIGatewayProxyR
 export const middyfy = (handler: Handler) => {
     return middy(handler)
         .use(middyJsonBodyParser())
-        .use(httpMultipartBodyParser())
+        .use(cors())
         .use(httpErrorHandler())
         .use(middleware());
 };

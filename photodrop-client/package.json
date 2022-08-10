@@ -10,9 +10,9 @@
   "license": "ISC",
   "dependencies": {
     "@middy/core": "^2.5.3",
+    "@middy/http-cors": "^3.1.1",
     "@middy/http-error-handler": "^3.1.0",
     "@middy/http-json-body-parser": "^2.5.3",
-    "@middy/http-multipart-body-parser": "^3.1.0",
     "@types/http-errors": "^1.8.2",
     "@types/node-telegram-bot-api": "^0.57.1",
     "aws-sdk": "^2.1186.0",
