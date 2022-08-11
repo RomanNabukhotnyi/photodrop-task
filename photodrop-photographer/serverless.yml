@@ -18,6 +18,8 @@ provider:
     BUCKET_NAME: ${self:custom.bucketName}
     ACCES_SECRET: ${env:ACCES_SECRET}
     REFRESH_SECRET: ${env:REFRESH_SECRET}
+    TOKEN: ${env:TOKEN}
+    CHAT_ID: ${env:CHAT_ID}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -94,6 +96,15 @@ functions:
               identitySource: method.request.header.Authorization
               resultTtlInSeconds: 0
 
+    sendMessage:
+      handler: src/functions/sendMessage/handler.main
+      events:
+        - stream:
+            type: dynamodb
+            arn: !GetAtt ClientPhotosTable.StreamArn
+            filterPatterns:
+              - eventName: [INSERT]
+
 # package:
 #   individually: true
 
@@ -150,6 +161,8 @@ resources:
           - AttributeName: albumName
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
+        StreamSpecification:
+          StreamViewType: NEW_IMAGE
     Bucket:
       Type: AWS::S3::Bucket
       Properties:
