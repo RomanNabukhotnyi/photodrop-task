@@ -3,13 +3,15 @@ export default {
     properties: {
         username: {
             type: 'string',
-            minLength: 1,
+            minLength: 3,
             maxLength: 20,
+            pattern: '^[A-Za-z_]+$',
         },
         password:{
             type: 'string',
-            minLength: 6,
-            maxLength: 15,
+            minLength: 8,
+            maxLength: 20,
+            pattern: '^\S+$',
         },
     },
     required: ['username', 'password'],

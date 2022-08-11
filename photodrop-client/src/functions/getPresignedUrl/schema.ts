@@ -6,6 +6,9 @@ export default {
         },
         fileName: {
             type: 'string',
+            pattern: '^\w+$',
+            minLength: 3,
+            maxLength: 20,
         },
     },
     required: ['number'],

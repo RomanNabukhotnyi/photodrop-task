@@ -3,6 +3,7 @@ export default {
     properties: {
         email: {
             type: 'string',
+            format: 'email',
         },
         name: {
             type: 'string',

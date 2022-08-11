@@ -3,6 +3,9 @@ export default {
     properties: {
         albumName: {
             type: 'string',
+            minLength: 3,
+            maxLength: 20,
+            pattern: '^\w+$',
         },
         photo: {
             type: 'string',

@@ -3,18 +3,19 @@ export default {
     properties: {
         name: {
             type: 'string',
-            minLength: 1,
-            maxLength: 50,
+            minLength: 3,
+            maxLength: 20,
+            pattern: '^\w+$',
         },
         location:{
             type: 'string',
-            minLength: 1,
-            maxLength: 50,
+            minLength: 3,
+            maxLength: 20,
+            pattern: '^\w+$',
         },
         date:{
             type: 'string',
-            minLength: 1,
-            maxLength: 50,
+            format: 'date',
         },
     },
     required: ['name', 'location', 'date'],
