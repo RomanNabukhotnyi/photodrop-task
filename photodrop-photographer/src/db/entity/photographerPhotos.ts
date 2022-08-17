@@ -4,6 +4,7 @@ import { PhotographerPhotosTable } from '../table/photographerPhotosTable';
 
 export const PhotographerPhotos = new Entity({
     name: 'PhotographerPhotos',
+    timestamps: false,
     attributes: {
         username: { partitionKey: true, type: 'string' },
         albumName: { sortKey: true, type: 'string' },

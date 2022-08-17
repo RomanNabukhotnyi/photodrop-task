@@ -6,5 +6,6 @@ const DocumentClient = new AWS.DynamoDB.DocumentClient();
 export const PhotographersTable = new Table({
     name: process.env.PHOTOGRAPHERS_TABLE_NAME,
     partitionKey: 'username',
+    entityField: false,
     DocumentClient,
 });

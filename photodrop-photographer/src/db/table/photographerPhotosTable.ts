@@ -7,5 +7,6 @@ export const PhotographerPhotosTable = new Table({
     name: process.env.PHOTOGRAPHER_PHOTOS_TABLE_NAME,
     partitionKey: 'username',
     sortKey: 'albumName',
+    entityField: false,
     DocumentClient,
 });
