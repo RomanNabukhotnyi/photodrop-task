@@ -4,6 +4,7 @@ import { ClientsTable } from '../table/clientsTable';
 
 export const Client = new Entity({
     name: 'Client',
+    timestamps: false,
     attributes: {
         number: { partitionKey: true, type: 'string' },
         name: { type: 'string' },
