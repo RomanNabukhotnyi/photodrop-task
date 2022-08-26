@@ -6,7 +6,8 @@ const getListAlbums = async (event) => {
     const { Items } = await ClientPhotos.query(number, {
         attributes: ['albumName', 'albumLocation', 'albumDate'],
     });
-    return Items ?? [];
+
+    return [...new Map(Items.map(item=>[item.albumName, item])).values()] ?? [];
 };
 
 export const main = middyfy(getListAlbums);

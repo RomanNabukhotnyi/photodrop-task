@@ -36,14 +36,15 @@ const verifyOtp: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (even
         for (const item of Items) {
             await ClientPhotos.put({
                 number: newNumber,
+                url: item.url,
                 albumName: item.albumName,
                 albumLocation: item.albumLocation,
                 albumDate: item.albumDate,
-                photos: item.photos,
+                watermark: item.watermark,
             });
             await ClientPhotos.delete({
                 number: item.number,
-                albumName: item.albumName,
+                url: item.url,
             });
         }
     } else {

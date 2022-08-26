@@ -6,16 +6,24 @@ import { ClientPhotos } from '../../db/entity/clientPhotos';
 const getAlbumPhotos = async (event) => {
     const number: string = event.requestContext.authorizer.principalId;
     const albumName = event.pathParameters.albumName;
-    const { Item } = await ClientPhotos.get({
-        number,
-        albumName,
-    }, {
-        attributes: ['albumName', 'albumLocation', 'albumDate', 'photos'],
+    const { Items } = await ClientPhotos.scan({
+        filters: [
+            { attr: 'number', eq: number },
+            { attr: 'albumName', eq: albumName },
+        ],
     });
-    if (!Item) {
+    if (!Items) {
         throw new createError.BadRequest('No album with this name was found.');
     }
-    return Item;
+    return {
+        albumName,
+        albumLocation: Items[0].albumLocation,
+        albumDate: Items[0].albumDate,
+        photos: Items.map(item => ({
+            url: item.url,
+            watermark: item.watermark,
+        })),
+    };
 };
 
 export const main = middyfy(getAlbumPhotos);

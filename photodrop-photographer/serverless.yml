@@ -15,6 +15,7 @@ provider:
     PHOTOGRAPHERS_TABLE_NAME: ${self:custom.photographersTableName}
     PHOTOGRAPHER_PHOTOS_TABLE_NAME: ${self:custom.photographerPhotosTableName}
     CLIENT_PHOTOS_TABLE_NAME: ${self:custom.clientPhotosTableName}
+    PHOTOGRAPHER_CLIENTS_TABLE_NAME: ${self:custom.photographerClientsTableName}
     BUCKET_NAME: ${self:custom.bucketName}
     ACCES_SECRET: ${env:ACCES_SECRET}
     REFRESH_SECRET: ${env:REFRESH_SECRET}
@@ -84,6 +85,30 @@ functions:
               identitySource: method.request.header.Authorization
               resultTtlInSeconds: 0
 
+    deletePhoto:
+      handler: src/functions/deletePhoto/handler.main
+      events:
+        - http:
+            path: /deletePhoto/{albumName}/{photoName}
+            method: delete
+            cors: true
+            authorizer:
+              name: verifyToken
+              identitySource: method.request.header.Authorization
+              resultTtlInSeconds: 0
+
+    searchClient:
+      handler: src/functions/searchClient/handler.main
+      events:
+        - http:
+            path: /searchClient
+            method: get
+            cors: true
+            authorizer:
+              name: verifyToken
+              identitySource: method.request.header.Authorization
+              resultTtlInSeconds: 0
+
     getAlbum:
       handler: src/functions/getAlbum/handler.main
       events:
@@ -112,6 +137,7 @@ custom:
   photographersTableName: photographers-table
   photographerPhotosTableName: photographer-photos-table
   clientPhotosTableName: client-photos-table
+  photographerClientsTableName: photographer-clients-table
   bucketName: photodrop-photos-bucket
   webpack:
     webpackConfig: webpack.config.ts
@@ -153,16 +179,31 @@ resources:
         AttributeDefinitions:
           - AttributeName: number
             AttributeType: S
-          - AttributeName: albumName
+          - AttributeName: url
             AttributeType: S
         KeySchema:
           - AttributeName: number
             KeyType: HASH
-          - AttributeName: albumName
+          - AttributeName: url
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         StreamSpecification:
           StreamViewType: NEW_IMAGE
+    PhotographerClientsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.photographerClientsTableName}
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+          - AttributeName: number
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+          - AttributeName: number
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
     Bucket:
       Type: AWS::S3::Bucket
       Properties:

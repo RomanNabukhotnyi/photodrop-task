@@ -13,14 +13,13 @@ export default {
             uniqueItems: true,
             items: {
                 type: 'string',
+                pattern: '^\+\d{12}$',
             },
         },
-        fileName: {
-            type: 'string',
-            pattern: '^\w+$',
-            minLength: 3,
-            maxLength: 20,
+        amount: {
+            type: 'integer',
+            minimum: 1,
         },
     },
-    required: ['albumName', 'numbers'],
+    required: ['albumName', 'numbers', 'amount'],
 } as const;
