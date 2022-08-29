@@ -44,4 +44,4 @@ const login: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) =
     };
 };
 
-export const main = middyfy(login);
+export const main = middyfy(login, schema);

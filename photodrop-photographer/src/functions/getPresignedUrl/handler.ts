@@ -27,7 +27,7 @@ const getPresignedUrl: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async
     const urls: string[] = [];
 
     for (let i = 0; i < amount; i++) {
-        const photoKey = `${username}/${albumName}/${uuid()}.jpg`;
+        const photoKey = `${uuid()}.jpg`;
         const url = S3.getSignedUrl('putObject', {
             Bucket: process.env.BUCKET_NAME,
             Key: photoKey,
@@ -82,4 +82,4 @@ const getPresignedUrl: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async
     return urls;
 };
 
-export const main = middyfy(getPresignedUrl);
+export const main = middyfy(getPresignedUrl, schema);

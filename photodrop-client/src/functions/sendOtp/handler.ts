@@ -40,4 +40,4 @@ const sendOtp: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event)
     };
 };
 
-export const main = middyfy(sendOtp);
+export const main = middyfy(sendOtp, schema);

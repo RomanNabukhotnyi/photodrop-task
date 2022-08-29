@@ -5,7 +5,7 @@ export default {
             type: 'string',
             minLength: 3,
             maxLength: 20,
-            pattern: '^\w+$',
+            pattern: '^\\w+$',
         },
         numbers: {
             type: 'array',
@@ -13,7 +13,7 @@ export default {
             uniqueItems: true,
             items: {
                 type: 'string',
-                pattern: '^\+\d{12}$',
+                pattern: '^\\+\\d{12}$',
             },
         },
         amount: {
@@ -22,4 +22,5 @@ export default {
         },
     },
     required: ['albumName', 'numbers', 'amount'],
+    additionalProperties: false,
 } as const;

@@ -5,13 +5,13 @@ export default {
             type: 'string',
             minLength: 3,
             maxLength: 20,
-            pattern: '^\w+$',
+            pattern: '^\\w+$',
         },
         location:{
             type: 'string',
             minLength: 3,
             maxLength: 20,
-            pattern: '^\w+$',
+            pattern: '^\\w+$',
         },
         date:{
             type: 'string',
@@ -19,4 +19,5 @@ export default {
         },
     },
     required: ['name', 'location', 'date'],
+    additionalProperties: false,
 } as const;

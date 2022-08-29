@@ -11,13 +11,13 @@ export default {
             type: 'string',
             minLength: 8,
             maxLength: 20,
-            pattern: '^\S+$',
+            pattern: '^\\S+$',
         },
         fullName: {
             type: 'string',
             minLength: 3,
             maxLength: 30,
-            pattern: '^[A-Za-z]+\s[A-Za-z]+$',
+            pattern: '^[A-Za-z]+\\s[A-Za-z]+$',
         },
         email:{
             type: 'string',
@@ -25,4 +25,5 @@ export default {
         },
     },
     required: ['username', 'password'],
+    additionalProperties: false,
 } as const;

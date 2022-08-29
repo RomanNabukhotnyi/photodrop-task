@@ -3,11 +3,11 @@ import { ClientPhotos } from '../../db/entity/clientPhotos';
 
 const remoweWatermark = async (event) => {
     const number: string = event.requestContext.authorizer.principalId;
-    const { photo } = event.body;
+    const { photoKey } = event.pathParameters;
 
     await ClientPhotos.update({
         number,
-        url: photo,
+        url: `https://${process.env.PHOTOGRAPHER_BUCKET_NAME}.s3.amazonaws.com/${photoKey}`,
         watermark: false,
     });
 

@@ -1,20 +1,13 @@
-import createError from 'http-errors';
 import jwt from 'jsonwebtoken';
 
 const verifyToken = async (event) => {
     const token = event.authorizationToken.replace('Bearer ', '');
     const methodArn = event.methodArn;
     if (!token || !methodArn) {
-        throw new createError.Unauthorized('Unauthorized.');
+        throw Error('Unauthorized');
     }
     try {
         const decoded: any = jwt.verify(token, process.env.ACCES_SECRET);
-        let Effect = '';
-        if (decoded && decoded.username) {
-            Effect = 'Allow';
-        } else {
-            Effect = 'Deny';
-        }
         return {
             principalId: decoded.username,
             policyDocument: {
@@ -22,14 +15,14 @@ const verifyToken = async (event) => {
                 Statement: [
                     {
                         Action: 'execute-api:Invoke',
-                        Effect,
+                        Effect: 'Allow',
                         Resource: methodArn,
                     },
                 ],
             },
         };
     } catch (error) {
-        throw new createError.BadRequest(error.message);
+        throw Error('Unauthorized');
     }
 };
 

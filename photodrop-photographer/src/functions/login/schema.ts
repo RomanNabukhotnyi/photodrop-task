@@ -11,8 +11,9 @@ export default {
             type: 'string',
             minLength: 8,
             maxLength: 20,
-            pattern: '^\S+$',
+            pattern: '^\\S+$',
         },
     },
     required: ['username', 'password'],
+    additionalProperties: false,
 } as const;

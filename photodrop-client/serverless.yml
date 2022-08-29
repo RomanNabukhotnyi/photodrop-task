@@ -15,6 +15,7 @@ provider:
     CLIENTS_TABLE_NAME: ${self:custom.clientsTableName}
     CLIENT_PHOTOS_TABLE_NAME: ${self:custom.clientPhotosTableName}
     BUCKET_NAME: ${self:custom.bucketName}
+    PHOTOGRAPHER_BUCKET_NAME: ${self:custom.photographerBucketName}
     SECRET: ${env:SECRET}
     TOKEN: ${env:TOKEN}
     CHAT_ID: ${env:CHAT_ID}
@@ -51,10 +52,6 @@ functions:
         - http:
             path: /getPresignedUrl
             method: get
-            request:
-              parameters:
-                querystrings:
-                  fileName: false
             cors: true
             authorizer:
               name: verifyToken
@@ -101,8 +98,8 @@ functions:
       handler: src/functions/removeWatermark/handler.main
       events:
         - http:
-            path: /removeWatermark
-            method: post
+            path: /removeWatermark/{photoKey}
+            method: delete
             cors: true
             authorizer:
               name: verifyToken
@@ -128,6 +125,7 @@ custom:
   clientsTableName: clients-table
   clientPhotosTableName: client-photos-table
   bucketName: photodrop-client-bucket
+  photographerBucketName: photodrop-photos-bucket
   webpack:
     webpackConfig: webpack.config.ts
     includeModules: true

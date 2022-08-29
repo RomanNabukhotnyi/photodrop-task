@@ -27,4 +27,4 @@ const createAlbum: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (ev
     };
 };
 
-export const main = middyfy(createAlbum);
+export const main = middyfy(createAlbum, schema);

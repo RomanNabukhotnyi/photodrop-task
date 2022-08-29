@@ -13,6 +13,7 @@
     "@middy/http-cors": "^3.1.1",
     "@middy/http-error-handler": "^3.1.0",
     "@middy/http-json-body-parser": "^2.5.3",
+    "@middy/validator": "^3.2.2",
     "aws-sdk": "^2.1186.0",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.0.1",

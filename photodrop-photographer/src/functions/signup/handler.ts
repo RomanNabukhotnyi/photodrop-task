@@ -27,4 +27,4 @@ const signup: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) 
     };
 };
 
-export const main = middyfy(signup);
+export const main = middyfy(signup, schema);

@@ -7,6 +7,7 @@ export default {
         },
         name: {
             type: 'string',
+            pattern: '^[A-Za-z]+\\s[A-Za-z]+$',
         },
     },
 } as const;

@@ -17,4 +17,4 @@ const updateClient: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (e
     };
 };
 
-export const main = middyfy(updateClient);
+export const main = middyfy(updateClient, schema);

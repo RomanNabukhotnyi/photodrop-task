@@ -8,14 +8,12 @@ const S3 = new AWS.S3();
 
 const deletePhoto = async (event) => {
     const username: string = event.requestContext.authorizer.principalId;
-    const albumName = event.pathParameters.albumName;
-    const photoName = event.pathParameters.photoName;
-    const photoKey = `${username}/${albumName}/${photoName}.jpg`;
-    const photoUrl = `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${photoKey}`;
+    const { albumName, photoName } = event.pathParameters;
+    const photoUrl = `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${photoName}`;
     
     await S3.deleteObject({
         Bucket: process.env.BUCKET_NAME,
-        Key: photoKey,
+        Key: photoName,
     }).promise();
 
     await PhotographerPhotos.update({
