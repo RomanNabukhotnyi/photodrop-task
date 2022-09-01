@@ -5,20 +5,20 @@ import { ClientPhotos } from '../../db/entity/clientPhotos';
 
 const getAlbumPhotos = async (event) => {
     const number: string = event.requestContext.authorizer.principalId;
-    const albumName = event.pathParameters.albumName;
+    const name = decodeURIComponent(event.pathParameters.albumName);
     const { Items } = await ClientPhotos.scan({
         filters: [
             { attr: 'number', eq: number },
-            { attr: 'albumName', eq: albumName },
+            { attr: 'name', eq: name },
         ],
     });
-    if (!Items) {
+    if (Items.length == 0) {
         throw new createError.BadRequest('No album with this name was found.');
     }
     return {
-        albumName,
-        albumLocation: Items[0].albumLocation,
-        albumDate: Items[0].albumDate,
+        name,
+        location: Items[0].location,
+        date: Items[0].date,
         photos: Items.map(item => ({
             url: item.url,
             watermark: item.watermark,

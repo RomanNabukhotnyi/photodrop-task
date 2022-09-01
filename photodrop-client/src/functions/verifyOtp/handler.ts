@@ -37,9 +37,9 @@ const verifyOtp: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (even
             await ClientPhotos.put({
                 number: newNumber,
                 url: item.url,
-                albumName: item.albumName,
-                albumLocation: item.albumLocation,
-                albumDate: item.albumDate,
+                name: item.name,
+                location: item.location,
+                date: item.date,
                 watermark: item.watermark,
             });
             await ClientPhotos.delete({
@@ -64,4 +64,4 @@ const verifyOtp: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (even
     };
 };
 
-export const main = middyfy(verifyOtp);
+export const main = middyfy(verifyOtp, schema);
