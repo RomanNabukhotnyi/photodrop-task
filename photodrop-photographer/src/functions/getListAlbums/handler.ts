@@ -4,7 +4,7 @@ import { PhotographerPhotos } from '../../db/entity/photographerPhotos';
 const getListAlbums = async (event) => {
     const username: string = event.requestContext.authorizer.principalId;
     const { Items } = await PhotographerPhotos.query(username, {
-        attributes: ['albumName', 'albumLocation', 'albumDate'],
+        attributes: ['name', 'location', 'date'],
     });
     return Items ?? [];
 };

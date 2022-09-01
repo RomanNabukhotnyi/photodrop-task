@@ -1,19 +1,13 @@
 export default {
     type: 'object',
     properties: {
-        albumName: {
-            type: 'string',
-            minLength: 3,
-            maxLength: 20,
-            pattern: '^\\w+$',
-        },
         numbers: {
             type: 'array',
             minItems: 1,
             uniqueItems: true,
             items: {
                 type: 'string',
-                pattern: '^\\+\\d{12}$',
+                pattern: '^\\+\\d{10,15}$',
             },
         },
         amount: {
@@ -21,6 +15,6 @@ export default {
             minimum: 1,
         },
     },
-    required: ['albumName', 'numbers', 'amount'],
+    required: ['numbers', 'amount'],
     additionalProperties: false,
 } as const;

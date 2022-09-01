@@ -27,11 +27,11 @@ const login: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) =
         username,
     });
     if (!Item) {
-        throw new createError.BadRequest('No photographer with this username was found.');
+        throw new createError.BadRequest('No photographer with this username was found');
     }
     const isValidPassword = await bcrypt.compare(password, Item.passwordHash);
     if (!isValidPassword) {
-        throw new createError.BadRequest('Incorrect password entered.');
+        throw new createError.BadRequest('Incorrect password entered');
     }
     const tokens = generateTokens(username);
     await Photographer.update({
@@ -39,7 +39,7 @@ const login: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) =
         refreshToken: tokens.refreshToken,
     });
     return {
-        message: 'Success.',
+        message: 'Success',
         token: tokens.accessToken,
     };
 };

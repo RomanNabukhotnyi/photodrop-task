@@ -7,9 +7,9 @@ export const PhotographerPhotos = new Entity({
     timestamps: false,
     attributes: {
         username: { partitionKey: true, type: 'string' },
-        albumName: { sortKey: true, type: 'string' },
-        albumDate: { required: true, type: 'string' },
-        albumLocation: { required: true, type: 'string' },
+        name: { sortKey: true, type: 'string' },
+        date: { required: true, type: 'string' },
+        location: { required: true, type: 'string' },
         photos: { type: 'set', setType: 'string' },
     },
     table: PhotographerPhotosTable,

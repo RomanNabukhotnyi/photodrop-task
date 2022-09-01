@@ -65,7 +65,7 @@ functions:
       handler: src/functions/getPresignedUrl/handler.main
       events:
         - http:
-            path: /getPresignedUrl
+            path: /getPresignedUrl/{albumName}
             method: post
             cors: true
             authorizer:
@@ -121,6 +121,18 @@ functions:
               identitySource: method.request.header.Authorization
               resultTtlInSeconds: 0
 
+    deleteAlbum:
+      handler: src/functions/deleteAlbum/handler.main
+      events:
+        - http:
+            path: /albums/{albumName}
+            method: delete
+            cors: true
+            authorizer:
+              name: verifyToken
+              identitySource: method.request.header.Authorization
+              resultTtlInSeconds: 0
+
     sendMessage:
       handler: src/functions/sendMessage/handler.main
       events:
@@ -129,6 +141,14 @@ functions:
             arn: !GetAtt ClientPhotosTable.StreamArn
             filterPatterns:
               - eventName: [INSERT]
+
+    updateDb:
+      handler: src/functions/updateDb/handler.main
+      events:
+        - s3:
+            bucket: ${self:custom.bucketName}
+            event: s3:ObjectCreated:Put
+            existing: true
 
 # package:
 #   individually: true
@@ -164,12 +184,12 @@ resources:
         AttributeDefinitions:
           - AttributeName: username
             AttributeType: S
-          - AttributeName: albumName
+          - AttributeName: name
             AttributeType: S
         KeySchema:
           - AttributeName: username
             KeyType: HASH
-          - AttributeName: albumName
+          - AttributeName: name
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
     ClientPhotosTable:

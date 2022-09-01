@@ -3,12 +3,18 @@ import { PhotographerClients } from '../../db/entity/photographerClients';
 
 const searchClient = async (event) => {
     const username: string = event.requestContext.authorizer.principalId;
-    const contains = event.queryStringParameters.contains;
+    const contains = event.queryStringParameters?.contains;
+
+    let filters: any = [
+        { attr: 'username', eq: username },
+    ];
+
+    if (contains) {
+        filters.push({ attr: 'number', contains });
+    }
+
     const { Items } = await PhotographerClients.scan({
-        filters: [
-            { attr: 'username', eq: username },
-            { attr: 'number', contains },
-        ],
+        filters, 
         attributes: ['number'],
     });
 

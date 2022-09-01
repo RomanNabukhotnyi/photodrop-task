@@ -3,19 +3,19 @@ import createError from 'http-errors';
 import { middyfy } from '../../libs/lambda';
 import { PhotographerPhotos } from '../../db/entity/photographerPhotos';
 
-const getAlbumPhotos = async (event) => {
+const getAlbum = async (event) => {
     const username: string = event.requestContext.authorizer.principalId;
-    const albumName = event.pathParameters.albumName;
+    const name = decodeURIComponent(event.pathParameters.albumName);
     const { Item } = await PhotographerPhotos.get({
         username,
-        albumName,
+        name,
     }, {
-        attributes: ['albumName', 'albumLocation', 'albumDate', 'photos'],
+        attributes: ['name', 'location', 'date', 'photos'],
     });
     if (!Item) {
-        throw new createError.BadRequest('No album with this name was found.');
+        throw new createError.BadRequest('No album with this name was found');
     }
     return Item;
 };
 
-export const main = middyfy(getAlbumPhotos);
+export const main = middyfy(getAlbum);

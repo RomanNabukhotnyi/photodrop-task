@@ -8,17 +8,13 @@ const S3 = new AWS.S3();
 
 const deletePhoto = async (event) => {
     const username: string = event.requestContext.authorizer.principalId;
-    const { albumName, photoName } = event.pathParameters;
+    const name = decodeURIComponent(event.pathParameters.albumName);
+    const { photoName } = event.pathParameters;
     const photoUrl = `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${photoName}`;
-    
-    await S3.deleteObject({
-        Bucket: process.env.BUCKET_NAME,
-        Key: photoName,
-    }).promise();
 
     await PhotographerPhotos.update({
         username,
-        albumName,
+        name,
         photos: { $delete: [photoUrl] },
     });
 
@@ -29,14 +25,31 @@ const deletePhoto = async (event) => {
     });
 
     for (const item of Items) {
-        await ClientPhotos.delete({
-            number: item.number,
-            url: photoUrl,
-        });
+        if (item.watermark) {
+            await ClientPhotos.delete({
+                number: item.number,
+                url: photoUrl,
+            });
+        }
+    }
+
+    const { Items: photos } = await ClientPhotos.scan({
+        filters: [
+            { attr: 'url', eq: photoUrl },
+        ],
+    });
+
+    if (photos) {
+        if (!photos.find(photo=>photo.url === photoUrl)) {
+            await S3.deleteObject({
+                Bucket: process.env.BUCKET_NAME,
+                Key: photoName,
+            }).promise();
+        }
     }
 
     return {
-        message: 'Successfully deleted.',
+        message: 'Successfully deleted',
     };
 };
 

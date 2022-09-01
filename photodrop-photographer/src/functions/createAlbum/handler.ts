@@ -11,19 +11,19 @@ const createAlbum: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (ev
     const { name, location, date } = event.body;
     const { Item } = await PhotographerPhotos.get({
         username,
-        albumName: name,
+        name,
     });
     if (Item) {
-        throw new createError.BadRequest('An album with that name already exists.');
+        throw new createError.BadRequest('An album with that name already exists');
     }
     await PhotographerPhotos.put({
         username,
-        albumName: name,
-        albumLocation: location,
-        albumDate: date,
+        name,
+        location,
+        date,
     });
     return {
-        message: 'Successfully created album.',
+        message: 'Successfully created album',
     };
 };
 

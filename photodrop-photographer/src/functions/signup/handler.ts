@@ -13,7 +13,7 @@ const signup: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) 
         username,
     });
     if (Item) {
-        throw new createError.BadRequest('A photographer with this username already exists.');
+        throw new createError.BadRequest('A photographer with this username already exists');
     }
     const passwordHash = await bcrypt.hash(password, 8);
     await Photographer.put({
@@ -23,7 +23,7 @@ const signup: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) 
         email,
     });
     return {
-        message: 'User registration successful.',
+        message: 'User registration successful',
     };
 };
 

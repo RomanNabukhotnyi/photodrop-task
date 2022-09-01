@@ -5,8 +5,6 @@ import createError from 'http-errors';
 import type { ValidatedEventAPIGatewayProxyEvent } from '../../libs/api-gateway';
 import { middyfy } from '../../libs/lambda';
 import { PhotographerPhotos } from '../../db/entity/photographerPhotos';
-import { ClientPhotos } from '../../db/entity/clientPhotos';
-import { PhotographerClients } from '../../db/entity/photographerClients';
 
 import schema from './schema';
 
@@ -14,16 +12,16 @@ const S3 = new AWS.S3();
 
 const getPresignedUrl: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
     const username: string = event.requestContext.authorizer.principalId;
-    const { albumName, numbers, amount } = event.body;
+    const name = decodeURIComponent(event.pathParameters.albumName);
+    const { numbers, amount } = event.body;
     const { Item: photographerPhotos } = await PhotographerPhotos.get({
         username,
-        albumName,
+        name,
     });
     if (!photographerPhotos) {
-        throw new createError.BadRequest('No album with this name was found.');
+        throw new createError.BadRequest('No album with this name was found');
     }
 
-    const photoUrls: string[] = [];
     const urls: string[] = [];
 
     for (let i = 0; i < amount; i++) {
@@ -34,49 +32,13 @@ const getPresignedUrl: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async
             Expires: 3600,
             ContentType: 'image/jpeg',
             ACL: 'public-read',
+            Metadata: {
+                username,
+                name,
+                numbers: JSON.stringify(numbers),
+            },
         });
         urls.push(url);
-        const photoUrl = `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${photoKey}`;
-        photoUrls.push(photoUrl);
-    }
-
-    if (!photographerPhotos.photos) {
-        await PhotographerPhotos.update({
-            username,
-            albumName,
-            photos: photoUrls,
-        });
-    } else {
-        await PhotographerPhotos.update({
-            username,
-            albumName,
-            photos: { $add: photoUrls },
-        });
-    }
-
-    for (const number of numbers) {
-        await PhotographerClients.put({
-            username,
-            number,
-        });
-
-        const { Item: { albumLocation, albumDate } } = await PhotographerPhotos.get({
-            username,
-            albumName,
-        }, {
-            attributes: ['albumName', 'albumLocation', 'albumDate'],
-        });
-        
-        for (const url of photoUrls) {
-            await ClientPhotos.put({
-                number,
-                url,
-                albumName,
-                albumLocation,
-                albumDate,
-                watermark: true,
-            });
-        }
     }
 
     return urls;
