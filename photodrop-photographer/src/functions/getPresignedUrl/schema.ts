@@ -6,8 +6,19 @@ export default {
             minItems: 1,
             uniqueItems: true,
             items: {
-                type: 'string',
-                pattern: '^\\+\\d{10,15}$',
+                type: 'object',
+                properties: {
+                    countryCode: {
+                        type: 'string',
+                        pattern: '^\\+\\d{1,5}$',
+                    },
+                    phoneNumber: {
+                        type: 'string',
+                        pattern: '^\\d{9,10}$',
+                    },
+                },
+                required: ['countryCode', 'phoneNumber'],
+                additionalProperties: false,
             },
         },
         amount: {

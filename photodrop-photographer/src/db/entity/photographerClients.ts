@@ -8,6 +8,7 @@ export const PhotographerClients = new Entity({
     attributes: {
         username: { partitionKey: true, type: 'string' },
         number: { sortKey: true, type: 'string' },
+        countryCode: { type: 'string' },
     },
     table: PhotographerClientsTable,
 } as const);

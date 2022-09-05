@@ -15,10 +15,13 @@ const searchClient = async (event) => {
 
     const { Items } = await PhotographerClients.scan({
         filters, 
-        attributes: ['number'],
+        attributes: ['number', 'countryCode'],
     });
 
-    return Items.map(client => (client.number)) ?? [];
+    return Items.map(client => ({
+        countryCode: client.countryCode,
+        phoneNumber: client.number.replace(client.countryCode, ''),
+    })) ?? [];
 };
 
 export const main = middyfy(searchClient);
