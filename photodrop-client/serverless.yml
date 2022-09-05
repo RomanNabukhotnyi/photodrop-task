@@ -16,6 +16,7 @@ provider:
     CLIENT_PHOTOS_TABLE_NAME: ${self:custom.clientPhotosTableName}
     BUCKET_NAME: ${self:custom.bucketName}
     PHOTOGRAPHER_BUCKET_NAME: ${self:custom.photographerBucketName}
+    PHOTOGRAPHER_CLIENTS_TABLE_NAME: ${self:custom.photographerClientsTableName}
     SECRET: ${env:SECRET}
     TOKEN: ${env:TOKEN}
     CHAT_ID: ${env:CHAT_ID}
@@ -126,6 +127,7 @@ custom:
   clientPhotosTableName: client-photos-table
   bucketName: photodrop-client-bucket
   photographerBucketName: photodrop-photos-bucket
+  photographerClientsTableName: photographer-clients-table
   webpack:
     webpackConfig: webpack.config.ts
     includeModules: true

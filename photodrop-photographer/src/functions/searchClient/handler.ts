@@ -15,12 +15,13 @@ const searchClient = async (event) => {
 
     const { Items } = await PhotographerClients.scan({
         filters, 
-        attributes: ['number', 'countryCode'],
+        attributes: ['number', 'countryCode', 'name'],
     });
 
     return Items.map(client => ({
         countryCode: client.countryCode,
         phoneNumber: client.number.replace(client.countryCode, ''),
+        name: client.name,
     })) ?? [];
 };
 
