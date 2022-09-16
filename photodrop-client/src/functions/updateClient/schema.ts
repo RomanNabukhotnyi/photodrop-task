@@ -10,4 +10,5 @@ export default {
             pattern: '^[A-Za-z]+\\s[A-Za-z]+$',
         },
     },
+    additionalProperties: false,
 } as const;

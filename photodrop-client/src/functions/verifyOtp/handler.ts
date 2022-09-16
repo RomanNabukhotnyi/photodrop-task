@@ -10,9 +10,11 @@ import schema from './schema';
 
 const verifyOtp: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
     const { number, newNumber, code } = event.body;
-    if (newNumber) {
+    const concatNumber = number.countryCode.concat(number.phoneNumber);
+    const concatNewNumber = newNumber?.countryCode.concat(newNumber.phoneNumber);
+    if (concatNewNumber) {
         const { Item: { otp, expiryAt } } = await Client.get({
-            number: newNumber,
+            number: concatNewNumber,
         }, {
             attributes: ['otp', 'expiryAt'],
         });
@@ -20,22 +22,22 @@ const verifyOtp: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (even
             throw new createError.BadRequest('Invalid code.');
         }
         const { Item } = await Client.get({
-            number,
+            number: concatNumber,
         });
         await Client.update({
-            number: newNumber,
+            number: concatNewNumber,
             name: Item.name,
             email: Item.email,
             selfie: Item.selfie,
         });
         await Client.delete({
-            number,
+            number: concatNumber,
         });
 
         const { Items } = await ClientPhotos.query(number);
         for (const item of Items) {
             await ClientPhotos.put({
-                number: newNumber,
+                number: concatNewNumber,
                 url: item.url,
                 name: item.name,
                 location: item.location,
@@ -49,7 +51,7 @@ const verifyOtp: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (even
         }
     } else {
         const { Item: { otp, expiryAt } } = await Client.get({
-            number,
+            number: concatNumber,
         }, {
             attributes: ['otp', 'expiryAt'],
         });
@@ -57,7 +59,7 @@ const verifyOtp: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (even
             throw new createError.BadRequest('Invalid code.');
         }
     }
-    const payload = newNumber ? { number: newNumber } : { number };
+    const payload = concatNewNumber ? { number: concatNewNumber } : { number: concatNumber };
     const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '1d' });
     return {
         token,

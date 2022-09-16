@@ -36,11 +36,18 @@ const updateDb: Handler<S3CreateEvent> = async (event) => {
     }
 
     for (const number of JSON.parse(Metadata.numbers)) {
-        await PhotographerClients.put({
+        const { Item: client } = await PhotographerClients.get({
             username: Metadata.username,
             number: number.countryCode.concat(number.phoneNumber),
-            countryCode: number.countryCode,
         });
+
+        if (!client) {
+            await PhotographerClients.put({
+                username: Metadata.username,
+                number: number.countryCode.concat(number.phoneNumber),
+                countryCode: number.countryCode,
+            });
+        }
 
         const { Item: { location, date } } = await PhotographerPhotos.get({
             username: Metadata.username,

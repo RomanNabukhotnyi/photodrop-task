@@ -4,13 +4,21 @@ import { Client } from '../../db/entity/client';
 
 const getClient = async (event) => {
     const number: string = event.requestContext.authorizer.principalId;
-    const { Item } = await Client.get({
+    const { Item: { name, email, selfie, countryCode } } = await Client.get({
         number,
     }, {
-        attributes: ['number', 'name', 'email', 'selfie'],
+        attributes: ['countryCode', 'name', 'email', 'selfie'],
     });
     
-    return Item;
+    return {
+        number: {
+            countryCode,
+            phoneNumber: number.replace(countryCode, ''),
+        },
+        name,
+        email,
+        selfie,
+    };
 };
 
 export const main = middyfy(getClient);

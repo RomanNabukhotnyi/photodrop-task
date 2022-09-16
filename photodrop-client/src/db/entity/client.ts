@@ -7,6 +7,7 @@ export const Client = new Entity({
     timestamps: false,
     attributes: {
         number: { partitionKey: true, type: 'string' },
+        countryCode: { required: true, type: 'string' },
         name: { type: 'string' },
         email: { type: 'string' },
         selfie: { type: 'string' },
