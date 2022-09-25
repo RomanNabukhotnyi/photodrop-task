@@ -5,6 +5,8 @@ import createError from 'http-errors';
 import type { ValidatedEventAPIGatewayProxyEvent } from '../../libs/api-gateway';
 import { middyfy } from '../../libs/lambda';
 import { Client } from '../../db/entity/client';
+import { Otp } from '../../db/entity/otp';
+
 
 import schema from './schema';
 
@@ -22,16 +24,14 @@ const sendOtp: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event)
         if (Item) {
             throw new createError.BadRequest('A client with this number already exists.');
         }
-        await Client.put({
+        await Otp.update({
             number: concatNewNumber,
-            countryCode: newNumber.countryCode,
             otp, 
             expiryAt,
         });
     } else {
-        await Client.update({
+        await Otp.update({
             number: concatNumber,
-            countryCode: number.countryCode,
             otp,
             expiryAt,
         });

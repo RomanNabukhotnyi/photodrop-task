@@ -3,7 +3,7 @@ import createError from 'http-errors';
 import { middyfy } from '../../libs/lambda';
 import { ClientPhotos } from '../../db/entity/clientPhotos';
 
-const getAlbumPhotos = async (event) => {
+const getAlbum = async (event) => {
     const number: string = event.requestContext.authorizer.principalId;
     const name = decodeURIComponent(event.pathParameters.albumName);
     const { Items } = await ClientPhotos.scan({
@@ -26,4 +26,4 @@ const getAlbumPhotos = async (event) => {
     };
 };
 
-export const main = middyfy(getAlbumPhotos);
+export const main = middyfy(getAlbum);

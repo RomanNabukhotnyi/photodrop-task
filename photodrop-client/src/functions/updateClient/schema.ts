@@ -7,7 +7,8 @@ export default {
         },
         name: {
             type: 'string',
-            pattern: '^[A-Za-z]+\\s[A-Za-z]+$',
+            pattern: '^[A-Z][a-z]*\\s[A-Z][a-z]*$',
+            maxLength: 100,
         },
     },
     additionalProperties: false,

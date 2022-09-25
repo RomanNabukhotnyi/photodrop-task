@@ -11,8 +11,6 @@ export const Client = new Entity({
         name: { type: 'string' },
         email: { type: 'string' },
         selfie: { type: 'string' },
-        otp: { type: 'string' },
-        expiryAt: { type: 'number' },
     },
     table: ClientsTable,
 } as const);

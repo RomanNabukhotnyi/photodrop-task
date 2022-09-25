@@ -133,15 +133,6 @@ functions:
               identitySource: method.request.header.Authorization
               resultTtlInSeconds: 0
 
-    sendMessage:
-      handler: src/functions/sendMessage/handler.main
-      events:
-        - stream:
-            type: dynamodb
-            arn: !GetAtt ClientPhotosTable.StreamArn
-            filterPatterns:
-              - eventName: [INSERT]
-
     updateDb:
       handler: src/functions/updateDb/handler.main
       events:

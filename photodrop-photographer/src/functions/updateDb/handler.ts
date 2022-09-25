@@ -1,4 +1,5 @@
 import * as AWS from 'aws-sdk';
+import TelegramBot from 'node-telegram-bot-api';
 import { Handler, S3CreateEvent } from 'aws-lambda';
 
 import { PhotographerPhotos } from '../../db/entity/photographerPhotos';
@@ -35,6 +36,8 @@ const updateDb: Handler<S3CreateEvent> = async (event) => {
         });
     }
 
+    const bot = await new TelegramBot(process.env.TOKEN, { polling: true } );
+
     for (const number of JSON.parse(Metadata.numbers)) {
         const { Item: client } = await PhotographerClients.get({
             username: Metadata.username,
@@ -64,6 +67,8 @@ const updateDb: Handler<S3CreateEvent> = async (event) => {
             date,
             watermark: true,
         });
+
+        await bot.sendMessage(process.env.CHAT_ID, `Photodrop\n${number}\nYour photos have dropped.`);
     }
 };
 

@@ -2,7 +2,6 @@ import * as AWS from 'aws-sdk';
 import { v4 as uuid } from 'uuid';
 
 import { middyfy } from '../../libs/lambda';
-import { Client } from '../../db/entity/client';
 
 const S3 = new AWS.S3();
 
@@ -15,12 +14,9 @@ const getPresignedUrl = async (event) => {
         Expires: 600,
         ContentType: 'image/jpeg',
         ACL: 'public-read',
-    });
-    const selfieUrl = `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${encodeURIComponent(photoKey)}`;
-    
-    await Client.update({
-        number,
-        selfie: selfieUrl,
+        Metadata: {
+            number,
+        },
     });
 
     return {

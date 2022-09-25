@@ -1,23 +1,25 @@
+import createError from 'http-errors';
+
 import { middyfy } from '../../libs/lambda';
 import { Client } from '../../db/entity/client';
 
 
 const getClient = async (event) => {
     const number: string = event.requestContext.authorizer.principalId;
-    const { Item: { name, email, selfie, countryCode } } = await Client.get({
+    const { Item } = await Client.get({
         number,
-    }, {
-        attributes: ['countryCode', 'name', 'email', 'selfie'],
     });
-    
+    if (!Item) {
+        throw new createError.NotFound('Client not found.');
+    }
     return {
         number: {
-            countryCode,
-            phoneNumber: number.replace(countryCode, ''),
+            countryCode: Item.countryCode,
+            phoneNumber: number.replace(Item.countryCode, ''),
         },
-        name,
-        email,
-        selfie,
+        name: Item.name,
+        email: Item.email,
+        selfie: Item.selfie,
     };
 };
 
