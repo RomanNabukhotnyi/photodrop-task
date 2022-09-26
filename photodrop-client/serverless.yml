@@ -17,12 +17,15 @@ provider:
     OTPS_TABLE_NAME: ${self:custom.otpsTableName}
     CLIENT_PHOTOS_TABLE_NAME: ${self:custom.clientPhotosTableName}
     BUCKET_NAME: ${self:custom.bucketName}
+    LAMBDA_ACCESS_POINT_ARN: ${env:LAMBDA_ACCESS_POINT_ARN}
     PHOTOGRAPHER_BUCKET_NAME: ${self:custom.photographerBucketName}
     PHOTOGRAPHER_CLIENTS_TABLE_NAME: ${self:custom.photographerClientsTableName}
     SECRET: ${env:SECRET}
     TOKEN: ${env:TOKEN}
     CHAT_ID: ${env:CHAT_ID}
     WATERMARK_URL: ${env:WATERMARK_URL}
+    ACCESS_KEY_ID: ${env:ACCESS_KEY_ID}
+    SECRET_ACCESS_KEY: ${env:SECRET_ACCESS_KEY}
   iamRoleStatements:
     - Effect: Allow
       Action:
