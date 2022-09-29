@@ -10,7 +10,9 @@ import schema from './schema';
 
 const S3 = new AWS.S3();
 
-const getPresignedUrl: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
+const getPresignedUrl: ValidatedEventAPIGatewayProxyEvent<
+  typeof schema
+> = async (event) => {
     const username: string = event.requestContext.authorizer.principalId;
     const name = decodeURIComponent(event.pathParameters.albumName);
     const { numbers, amount } = event.body;
@@ -36,6 +38,7 @@ const getPresignedUrl: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async
                 username,
                 name,
                 numbers: JSON.stringify(numbers),
+                inform: i == amount - 1 ? 'true' : 'false',
             },
         });
         urls.push(url);

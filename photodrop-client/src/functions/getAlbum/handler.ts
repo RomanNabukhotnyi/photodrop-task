@@ -29,10 +29,10 @@ const getAlbum = async (event) => {
         location: Items[0].location,
         date: Items[0].date,
         photos: Items.map(item => {
-
+            const key = item.url.replace(`https://${process.env.PHOTOGRAPHER_BUCKET_NAME}.s3.amazonaws.com/`, '');
             const url = item.watermark ? S3.getSignedUrl('getObject', {
                 Bucket: process.env.LAMBDA_ACCESS_POINT_ARN,
-                Key: item.url.replace(`https://${process.env.PHOTOGRAPHER_BUCKET_NAME}.s3.amazonaws.com/`, ''),
+                Key: key,
                 Expires: 86400,
             }) : item.url;
             return {

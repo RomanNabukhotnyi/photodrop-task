@@ -5,7 +5,7 @@ import { ClientPhotos } from '../../db/entity/clientPhotos';
 
 const remoweWatermark = async (event) => {
     const number: string = event.requestContext.authorizer.principalId;
-    const { photoKey } = event.pathParameters;
+    const photoKey = decodeURIComponent(event.pathParameters.photoKey);
 
     if (!(photoKey as string).includes('.jpg')) {
         const albumName = photoKey;

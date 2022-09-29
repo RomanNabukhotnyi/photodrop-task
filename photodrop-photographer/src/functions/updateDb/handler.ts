@@ -39,15 +39,16 @@ const updateDb: Handler<S3CreateEvent> = async (event) => {
     const bot = await new TelegramBot(process.env.TOKEN, { polling: true } );
 
     for (const number of JSON.parse(Metadata.numbers)) {
+        const concatNumber = number.countryCode.concat(number.phoneNumber);
         const { Item: client } = await PhotographerClients.get({
             username: Metadata.username,
-            number: number.countryCode.concat(number.phoneNumber),
+            number: concatNumber,
         });
 
         if (!client) {
             await PhotographerClients.put({
                 username: Metadata.username,
-                number: number.countryCode.concat(number.phoneNumber),
+                number: concatNumber,
                 countryCode: number.countryCode,
             });
         }
@@ -59,16 +60,31 @@ const updateDb: Handler<S3CreateEvent> = async (event) => {
             attributes: ['name', 'location', 'date'],
         });
         
+        const { Items: clientPhotos } = await ClientPhotos.scan({
+            filters: [
+                { attr: 'number', eq: concatNumber },
+                { attr: 'name', eq: Metadata.name },
+                { attr: 'location', eq: location },
+                { attr: 'date', eq: date },
+            ],
+        });
+        let watermark = true;
+        if (clientPhotos.every(photo=>photo.watermark === false)) {
+            watermark = false;
+        }
+
         await ClientPhotos.put({
-            number: number.countryCode.concat(number.phoneNumber),
+            number: concatNumber,
             url: photoUrl,
             name: Metadata.name,
             location,
             date,
-            watermark: true,
+            watermark,
         });
 
-        await bot.sendMessage(process.env.CHAT_ID, `Photodrop\n${number}\nYour photos have dropped.`);
+        if ( Metadata.inform == 'true' ) {
+            await bot.sendMessage(process.env.CHAT_ID, `Photodrop\n${concatNumber}\nYour photos have dropped.`);
+        }
     }
 };
 
