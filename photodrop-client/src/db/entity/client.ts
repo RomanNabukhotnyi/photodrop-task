@@ -8,6 +8,7 @@ export const Client = new Entity({
     attributes: {
         number: { partitionKey: true, type: 'string' },
         countryCode: { required: true, type: 'string' },
+        id: { required: true, type: 'string' },
         name: { type: 'string' },
         email: { type: 'string' },
         selfie: { type: 'string' },

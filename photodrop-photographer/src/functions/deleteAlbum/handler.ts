@@ -8,53 +8,45 @@ import { ClientPhotos } from '../../db/entity/clientPhotos';
 const S3 = new AWS.S3();
 
 const deleteAlbum = async (event) => {
-    const username: string = event.requestContext.authorizer.principalId;
     const name = decodeURIComponent(event.pathParameters.albumName);
-    const { Item } = await PhotographerPhotos.get({
-        username,
-        name,
+    
+    const { Items: albums } = await PhotographerPhotos.scan({
+        filters: [
+            { attr: 'name', eq: name },
+        ],
     });
-    if (!Item) {
-        throw new createError.BadRequest('The album does not exist');
+
+    if (!albums.length) {
+        throw new createError.BadRequest('No album with this name was found');
     }
-    if (Item.photos) {
-        const { Items } = await ClientPhotos.scan({
-            filters: [
-                { attr: 'name', eq: name },
-                { attr: 'location', eq: Item.location },
-                { attr: 'date', eq: Item.date },
-            ],
-        });
-        for (const item of Items) {
-            if (item.watermark) {
-                await ClientPhotos.delete({
-                    number: item.number,
-                    url: item.url,
-                });
-            }
-        }
-        const { Items: photos } = await ClientPhotos.scan({
-            filters: [
-                { attr: 'name', eq: name },
-                { attr: 'location', eq: Item.location },
-                { attr: 'date', eq: Item.date },
-            ],
-        });
-        if (photos) {
-            for (const url of Item.photos) {
-                if (!photos.find(photo=>photo.url === url)) {
-                    await S3.deleteObject({
-                        Bucket: process.env.BUCKET_NAME,
-                        Key: url.match(/[a-z0-9-]+\.jpg$/)[0],
-                    }).promise();
-                }
-            }
-        }
-    }
-    await PhotographerPhotos.delete({
-        username,
-        name,
+
+    const { Items: photos } = await ClientPhotos.scan({
+        filters: [
+            { attr: 'name', eq: name },
+        ],
     });
+    
+    for (const photo of photos) {
+        await S3.deleteObject({
+            Bucket: process.env.BUCKET_NAME,
+            Key: 'original/' + photo.key,
+        }).promise();
+        await S3.deleteObject({
+            Bucket: process.env.BUCKET_NAME,
+            Key: 'watermark/' + photo.key,
+        }).promise();
+        await ClientPhotos.delete({
+            number: photo.number,
+            key: photo.key,
+        });
+    }
+
+    for (const album of albums) {
+        await PhotographerPhotos.delete({
+            username: album.username,
+            name: album.name,
+        });
+    }
 
     return {
         message: 'Successfully deleted',

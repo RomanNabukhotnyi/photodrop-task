@@ -1,37 +1,42 @@
-import * as AWS from 'aws-sdk';
-
 import { middyfy } from '../../libs/lambda';
 import { ClientPhotos } from '../../db/entity/clientPhotos';
-
-const S3 = new AWS.S3({
-    signatureVersion: 'v4',
-    credentials: new AWS.Credentials({
-        accessKeyId: process.env.ACCESS_KEY_ID,
-        secretAccessKey: process.env.SECRET_ACCESS_KEY,
-    }),
-});
 
 const getListAlbums = async (event) => {
     const number: string = event.requestContext.authorizer.principalId;
     const { Items } = await ClientPhotos.query(number, {
-        attributes: ['name', 'location', 'date', 'url', 'watermark'],
+        attributes: ['name', 'location', 'date', 'key', 'watermark'],
     });
 
-    return [...new Map(Items.map(album=>[album.name, {
-        name: album.name,
-        location: album.location,
-        date: album.date,
-        photos: Items.map(item => {
-            return item.name == album.name ? {
-                url: item.watermark ? S3.getSignedUrl('getObject', {
-                    Bucket: process.env.LAMBDA_ACCESS_POINT_ARN,
-                    Key: item.url.replace(`https://${process.env.PHOTOGRAPHER_BUCKET_NAME}.s3.amazonaws.com/`, ''),
-                    Expires: 86400,
-                }) : item.url,
-                watermark: item.watermark,
-            } : null;
-        }).filter(item => item != null),
-    }])).values()] ?? [];
+    const result = Items.reduce((acc, photo) => {
+        if (!acc.albums.find(album => album.name === photo.name)) {
+            acc.albums.push({
+                name: photo.name,
+                location: photo.location,
+                date: photo.date,
+                image: `https://${process.env.PHOTOGRAPHER_BUCKET_NAME}.s3.amazonaws.com/original/${photo.key}`,
+            });
+            Items.forEach(item => {
+                if (item.name == photo.name) {
+                    acc.allPhotos.push({
+                        album: item.name,
+                        url: item.watermark 
+                            ? `https://${process.env.PHOTOGRAPHER_BUCKET_NAME}.s3.amazonaws.com/watermark/${item.key}` 
+                            : `https://${process.env.PHOTOGRAPHER_BUCKET_NAME}.s3.amazonaws.com/original/${item.key}`,
+                        watermark: item.watermark,
+                    });
+                }
+            });
+        }
+        return acc;
+    }, {
+        albums: [],
+        allPhotos: [],
+    }) ?? {
+        albums: [],
+        allPhotos: [],
+    };
+
+    return result;
 };
 
 export const main = middyfy(getListAlbums);

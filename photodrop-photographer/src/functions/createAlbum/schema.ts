@@ -4,14 +4,12 @@ export default {
         name: {
             type: 'string',
             minLength: 3,
-            maxLength: 50,
-            pattern: '^[A-Za-z_ ]+$',
+            maxLength: 100,
         },
         location:{
             type: 'string',
             minLength: 3,
-            maxLength: 100,
-            pattern: '^[A-Za-z0-9_ ]+$',
+            maxLength: 200,
         },
         date:{
             type: 'string',

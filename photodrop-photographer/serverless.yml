@@ -2,6 +2,7 @@ service: photodrop-photographer
 frameworkVersion: "3"
 plugins:
   - serverless-webpack
+  - serverless-offline
 useDotenv: true
 provider:
   name: aws
@@ -21,6 +22,10 @@ provider:
     REFRESH_SECRET: ${env:REFRESH_SECRET}
     TOKEN: ${env:TOKEN}
     CHAT_ID: ${env:CHAT_ID}
+    LAMBDA_ACCESS_POINT_ARN: ${env:LAMBDA_ACCESS_POINT_ARN}
+    ACCESS_KEY_ID: ${env:ACCESS_KEY_ID}
+    SECRET_ACCESS_KEY: ${env:SECRET_ACCESS_KEY}
+    WATERMARK_URL: ${env:WATERMARK_URL}
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -85,18 +90,6 @@ functions:
               identitySource: method.request.header.Authorization
               resultTtlInSeconds: 0
 
-    deletePhoto:
-      handler: src/functions/deletePhoto/handler.main
-      events:
-        - http:
-            path: /deletePhoto/{albumName}/{photoName}
-            method: delete
-            cors: true
-            authorizer:
-              name: verifyToken
-              identitySource: method.request.header.Authorization
-              resultTtlInSeconds: 0
-
     searchClient:
       handler: src/functions/searchClient/handler.main
       events:
@@ -128,10 +121,6 @@ functions:
             path: /albums/{albumName}
             method: delete
             cors: true
-            authorizer:
-              name: verifyToken
-              identitySource: method.request.header.Authorization
-              resultTtlInSeconds: 0
 
     updateDb:
       handler: src/functions/updateDb/handler.main
@@ -139,6 +128,8 @@ functions:
         - s3:
             bucket: ${self:custom.bucketName}
             event: s3:ObjectCreated:Put
+            rules:
+              - prefix: original/
             existing: true
 
 # package:
@@ -147,7 +138,7 @@ functions:
 custom:
   photographersTableName: photographers-table
   photographerPhotosTableName: photographer-photos-table
-  clientPhotosTableName: client-photos-table
+  clientPhotosTableName: client-photo
   photographerClientsTableName: photographer-clients-table
   bucketName: photodrop-photos-bucket
   webpack:
@@ -168,7 +159,7 @@ resources:
           - AttributeName: username
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
-    PhotographerPhotosTable:
+    AlbumsTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:custom.photographerPhotosTableName}
@@ -183,19 +174,19 @@ resources:
           - AttributeName: name
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
-    ClientPhotosTable:
+    PhotosTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:custom.clientPhotosTableName}
         AttributeDefinitions:
           - AttributeName: number
             AttributeType: S
-          - AttributeName: url
+          - AttributeName: key
             AttributeType: S
         KeySchema:
           - AttributeName: number
             KeyType: HASH
-          - AttributeName: url
+          - AttributeName: key
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         StreamSpecification:

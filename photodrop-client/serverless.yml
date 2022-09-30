@@ -134,16 +134,13 @@ functions:
             event: s3:ObjectCreated:Put
             existing: true
 
-    addWatermark:
-      handler: src/functions/addWatermark/handler.main
-
 # package:
 #   individually: true
 
 custom:
   clientsTableName: clients-table
   otpsTableName: otps-table
-  clientPhotosTableName: client-photos-table
+  clientPhotosTableName: client-photo
   bucketName: photodrop-client-bucket
   photographerBucketName: photodrop-photos-bucket
   photographerClientsTableName: photographer-clients-table
@@ -186,23 +183,4 @@ resources:
       Properties:
         BucketName: ${self:custom.bucketName}
         AccessControl: PublicRead
-
-    bucketAccessPoint:
-      Type: AWS::S3::AccessPoint
-      Properties:
-        Bucket: ${self:custom.photographerBucketName}
-        Name: bucket-access-point-image-watermark
-
-    lambdaAccessPoint:
-      Type: AWS::S3ObjectLambda::AccessPoint
-      Properties:
-        Name: lambda-access-point-image-watermark
-        ObjectLambdaConfiguration:
-          SupportingAccessPoint: !Sub arn:aws:s3:${AWS::Region}:${AWS::AccountId}:accesspoint/${bucketAccessPoint}
-          TransformationConfigurations:
-            - Actions:
-                - "GetObject"
-              ContentTransformation:
-                AwsLambda:
-                  FunctionArn: !GetAtt AddWatermarkLambdaFunction.Arn
     

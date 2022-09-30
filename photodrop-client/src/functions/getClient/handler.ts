@@ -12,6 +12,7 @@ const getClient = async (event) => {
     if (!Item) {
         throw new createError.NotFound('Client not found.');
     }
+    const selfie = Item.selfie ? `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${Item.selfie}` : undefined;
     return {
         number: {
             countryCode: Item.countryCode,
@@ -19,7 +20,7 @@ const getClient = async (event) => {
         },
         name: Item.name,
         email: Item.email,
-        selfie: Item.selfie,
+        selfie,
     };
 };
 

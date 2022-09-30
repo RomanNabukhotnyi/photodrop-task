@@ -7,7 +7,7 @@ export const ClientPhotos = new Entity({
     timestamps: false,
     attributes: {
         number: { partitionKey: true, type: 'string' },
-        url: { sortKey: true, type: 'string' },
+        key: { sortKey: true, type: 'string' },
         name: { required: true, type: 'string' },
         location: { required: true, type: 'string' },
         date: { required: true, type: 'string' },

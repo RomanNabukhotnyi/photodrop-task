@@ -1,6 +1,7 @@
 import * as AWS from 'aws-sdk';
 import TelegramBot from 'node-telegram-bot-api';
 import { Handler, S3CreateEvent } from 'aws-lambda';
+import jimp from 'jimp';
 
 import { PhotographerPhotos } from '../../db/entity/photographerPhotos';
 import { ClientPhotos } from '../../db/entity/clientPhotos';
@@ -11,6 +12,31 @@ const S3 = new AWS.S3();
 const updateDb: Handler<S3CreateEvent> = async (event) => {
     const key = event.Records[0].s3.object.key;
     const photoUrl = `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${key}`;
+
+    const image = await jimp.read(photoUrl);
+    const watermarkImage = await jimp.read(process.env.WATERMARK_URL);
+    const width = image.bitmap.width;
+    const height = image.bitmap.height;
+    const resizedWatermark = watermarkImage.resize(width / 2, jimp.AUTO);
+    const watermarkWidth = resizedWatermark.bitmap.width;
+    const watermarkHeight = resizedWatermark.bitmap.height;
+    const x = width / 2 - watermarkWidth / 2;
+    const y = height / 2 - watermarkHeight / 2;
+    image.composite(resizedWatermark, x, y, {
+        mode: jimp.BLEND_SOURCE_OVER,
+        opacitySource: 0.5,
+        opacityDest: 1,
+    });
+
+    const buffer = await image.getBufferAsync(jimp.MIME_JPEG);
+
+    await S3.putObject({
+        Bucket: process.env.BUCKET_NAME,
+        Key: `watermark/${key.split('/')[1]}`,
+        ACL: 'public-read',
+        Body: buffer,
+        ContentType: 'image/jpeg',
+    }).promise();
 
     const { Metadata } = await S3.headObject({
         Bucket: process.env.BUCKET_NAME,
@@ -69,13 +95,13 @@ const updateDb: Handler<S3CreateEvent> = async (event) => {
             ],
         });
         let watermark = true;
-        if (clientPhotos.every(photo=>photo.watermark === false)) {
+        if (clientPhotos.length != 0 && clientPhotos.every(photo=>photo.watermark === false)) {
             watermark = false;
         }
 
         await ClientPhotos.put({
             number: concatNumber,
-            url: photoUrl,
+            key: key.split('/')[1],
             name: Metadata.name,
             location,
             date,

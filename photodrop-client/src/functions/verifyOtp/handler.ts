@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken';
 import createError from 'http-errors';
+import { v4 as uuid } from 'uuid';
+
 
 import type { ValidatedEventAPIGatewayProxyEvent } from '../../libs/api-gateway';
 import { middyfy } from '../../libs/lambda';
@@ -26,9 +28,15 @@ const verifyOtp: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (even
         const { Item: client } = await Client.get({
             number: concatNumber,
         });
+
+        if (!client) {
+            throw new createError.NotFound('Client not found.');
+        }
+
         await Client.put({
             number: concatNewNumber,
             countryCode: newNumber.countryCode,
+            id: client.id,
             name: client.name,
             email: client.email,
             selfie: client.selfie,
@@ -64,7 +72,7 @@ const verifyOtp: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (even
         for (const item of Items) {
             await ClientPhotos.put({
                 number: concatNewNumber,
-                url: item.url,
+                key: item.key,
                 name: item.name,
                 location: item.location,
                 date: item.date,
@@ -72,7 +80,7 @@ const verifyOtp: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (even
             });
             await ClientPhotos.delete({
                 number: item.number,
-                url: item.url,
+                key: item.key,
             });
         }
     } else {
@@ -81,7 +89,12 @@ const verifyOtp: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (even
         }, {
             attributes: ['otp', 'expiryAt'],
         });
-        if (!Item || !Item.otp || Item.otp != code || Item.expiryAt < Math.round(new Date().getTime() / 1000)) {
+
+        if (!Item) {
+            throw new createError.NotFound('Client not found.');
+        }
+
+        if (!Item.otp || Item.otp != code || Item.expiryAt < Math.round(new Date().getTime() / 1000)) {
             throw new createError.BadRequest('Invalid code.');
         }
         const { Item: client } = await Client.get({
@@ -91,6 +104,7 @@ const verifyOtp: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (even
             await Client.put({
                 number: concatNumber,
                 countryCode: number.countryCode,
+                id: uuid(),
             });
         }
     }

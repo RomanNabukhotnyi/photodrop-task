@@ -27,7 +27,7 @@ const getPresignedUrl: ValidatedEventAPIGatewayProxyEvent<
     const urls: string[] = [];
 
     for (let i = 0; i < amount; i++) {
-        const photoKey = `${uuid()}.jpg`;
+        const photoKey = `original/${uuid()}.jpg`;
         const url = S3.getSignedUrl('putObject', {
             Bucket: process.env.BUCKET_NAME,
             Key: photoKey,
