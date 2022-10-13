@@ -1,36 +1,35 @@
 service: photodrop-photographer
 frameworkVersion: "3"
 plugins:
-  - serverless-webpack
+  - serverless-esbuild
   - serverless-offline
 useDotenv: true
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: nodejs16.x
   apiGateway:
     minimumCompressionSize: 1024
     shouldStartNameWithService: true
   environment:
-    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
-    NODE_OPTIONS: --enable-source-maps --stack-trace-limit=1000
     PHOTOGRAPHERS_TABLE_NAME: ${self:custom.photographersTableName}
-    PHOTOGRAPHER_PHOTOS_TABLE_NAME: ${self:custom.photographerPhotosTableName}
-    CLIENT_PHOTOS_TABLE_NAME: ${self:custom.clientPhotosTableName}
+    ALBUMS_TABLE_NAME: ${self:custom.albumsTableName}
+    PHOTOS_TABLE_NAME: ${self:custom.photosTableName}
     PHOTOGRAPHER_CLIENTS_TABLE_NAME: ${self:custom.photographerClientsTableName}
+    CLIENT_PHOTOS_TABLE_NAME: ${self:custom.clientPhotosTableName}
+    CLIENTS_TABLE_NAME: ${self:custom.clientsTableName}
     BUCKET_NAME: ${self:custom.bucketName}
     ACCES_SECRET: ${env:ACCES_SECRET}
     REFRESH_SECRET: ${env:REFRESH_SECRET}
     TOKEN: ${env:TOKEN}
     CHAT_ID: ${env:CHAT_ID}
-    LAMBDA_ACCESS_POINT_ARN: ${env:LAMBDA_ACCESS_POINT_ARN}
+    WATERMARK_KEY: ${env:WATERMARK_KEY}
     ACCESS_KEY_ID: ${env:ACCESS_KEY_ID}
     SECRET_ACCESS_KEY: ${env:SECRET_ACCESS_KEY}
-    WATERMARK_URL: ${env:WATERMARK_URL}
+    PHOTODROP_CLIENT_URL: ${env:PHOTODROP_CLIENT_URL}
   iamRoleStatements:
     - Effect: Allow
       Action:
         - s3:*
-        - cognito-idp:*
         - dynamodb:*
       Resource: "*"
 
@@ -70,7 +69,7 @@ functions:
       handler: src/functions/getPresignedUrl/handler.main
       events:
         - http:
-            path: /getPresignedUrl/{albumName}
+            path: /getPresignedUrl/{albumId}
             method: post
             cors: true
             authorizer:
@@ -106,7 +105,7 @@ functions:
       handler: src/functions/getAlbum/handler.main
       events:
         - http:
-            path: /albums/{albumName}
+            path: /albums/{albumId}
             method: get
             cors: true
             authorizer:
@@ -118,12 +117,14 @@ functions:
       handler: src/functions/deleteAlbum/handler.main
       events:
         - http:
-            path: /albums/{albumName}
+            path: /albums/{albumId}
             method: delete
             cors: true
 
     updateDb:
       handler: src/functions/updateDb/handler.main
+      memorySize: 3008
+      timeout: 300
       events:
         - s3:
             bucket: ${self:custom.bucketName}
@@ -132,19 +133,21 @@ functions:
               - prefix: original/
             existing: true
 
-# package:
-#   individually: true
+package:
+  individually: true
 
 custom:
-  photographersTableName: photographers-table
-  photographerPhotosTableName: photographer-photos-table
-  clientPhotosTableName: client-photo
-  photographerClientsTableName: photographer-clients-table
-  bucketName: photodrop-photos-bucket
-  webpack:
-    webpackConfig: webpack.config.ts
-    includeModules: true
-    packager: npm
+  photographersTableName: photodrop-photographers
+  albumsTableName: photodrop-albums
+  photosTableName: photodrop-photos
+  photographerClientsTableName: photodrop-photographer-clients
+  clientPhotosTableName: photodrop-client-photos
+  clientsTableName: photodrop-clients
+  bucketName: photodrop-bucket
+  esbuild:
+    external: ["sharp"]
+    packagerOptions:
+      scripts: ["npm rebuild --arch=x64 --platform=linux sharp"]
 
 resources:
   Resources:
@@ -153,61 +156,123 @@ resources:
       Properties:
         TableName: ${self:custom.photographersTableName}
         AttributeDefinitions:
-          - AttributeName: username
+          - AttributeName: id
             AttributeType: S
         KeySchema:
-          - AttributeName: username
+          - AttributeName: id
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
+
     AlbumsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.photographerPhotosTableName}
+        TableName: ${self:custom.albumsTableName}
         AttributeDefinitions:
-          - AttributeName: username
+          - AttributeName: photographerId
             AttributeType: S
-          - AttributeName: name
+          - AttributeName: id
             AttributeType: S
         KeySchema:
-          - AttributeName: username
+          - AttributeName: photographerId
             KeyType: HASH
-          - AttributeName: name
+          - AttributeName: id
             KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: IdIndex
+            KeySchema:
+              - AttributeName: id
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
-    PhotosTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:custom.clientPhotosTableName}
-        AttributeDefinitions:
-          - AttributeName: number
-            AttributeType: S
-          - AttributeName: key
-            AttributeType: S
-        KeySchema:
-          - AttributeName: number
-            KeyType: HASH
-          - AttributeName: key
-            KeyType: RANGE
-        BillingMode: PAY_PER_REQUEST
-        StreamSpecification:
-          StreamViewType: NEW_IMAGE
+
     PhotographerClientsTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ${self:custom.photographerClientsTableName}
         AttributeDefinitions:
-          - AttributeName: username
+          - AttributeName: photographerId
+            AttributeType: S
+          - AttributeName: clientId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: photographerId
+            KeyType: HASH
+          - AttributeName: clientId
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+
+    ClientsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.clientsTableName}
+        AttributeDefinitions:
+          - AttributeName: id
             AttributeType: S
           - AttributeName: number
             AttributeType: S
         KeySchema:
-          - AttributeName: username
+          - AttributeName: id
             KeyType: HASH
-          - AttributeName: number
-            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: NumberIndex
+            KeySchema:
+              - AttributeName: number
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
+
+    PhotosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.photosTableName}
+        AttributeDefinitions:
+          - AttributeName: albumId
+            AttributeType: S
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: albumId
+            KeyType: HASH
+          - AttributeName: id
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: IdIndex
+            KeySchema:
+              - AttributeName: id
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
+    ClientPhotosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.clientPhotosTableName}
+        AttributeDefinitions:
+          - AttributeName: clientId
+            AttributeType: S
+          - AttributeName: photoId
+            AttributeType: S
+          - AttributeName: albumId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: clientId
+            KeyType: HASH
+          - AttributeName: photoId
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: AlbumIdIndex
+            KeySchema:
+              - AttributeName: albumId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+        BillingMode: PAY_PER_REQUEST
+
     Bucket:
       Type: AWS::S3::Bucket
       Properties:
         BucketName: ${self:custom.bucketName}
-        AccessControl: PublicRead
+        AccessControl: PublicReadWrite

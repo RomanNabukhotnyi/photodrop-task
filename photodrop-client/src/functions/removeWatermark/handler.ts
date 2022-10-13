@@ -1,32 +1,31 @@
-import createError from 'http-errors';
+import { APIGatewayProxyHandlerV2 } from 'aws-lambda';
 
-import { middyfy } from '../../libs/lambda';
-import { ClientPhotos } from '../../db/entity/clientPhotos';
+import { ClientPhoto } from '../../db/entity/clientPhoto';
 
-const remoweWatermark = async (event) => {
-    const number: string = event.requestContext.authorizer.principalId;
-    const albumName = decodeURIComponent(event.pathParameters.photoKey);
+const remoweWatermark: APIGatewayProxyHandlerV2<any> = async (event) => {
+    const stripeEvent = JSON.parse(event.body!);
+    
+    if (stripeEvent.type === 'checkout.session.completed') {
+        const { clientId, albumId } = stripeEvent.data.object.metadata;
 
-    const { Items } = await ClientPhotos.scan({
-        filters: [
-            { attr: 'number', eq: number },
-            { attr: 'name', eq: albumName },
-        ],
-    });
-    if (Items.length == 0) {
-        throw new createError.BadRequest('No album with this name was found.');
-    }
-    for (const item of Items) {
-        await ClientPhotos.update({
-            number,
-            key: item.key,
-            watermark: false,
+        const { Items: photos = [] } = await ClientPhoto.query(clientId, {
+            filters: [
+                { attr: 'albumId', eq: albumId },
+            ],
         });
+
+        for (const photo of photos) {
+            await ClientPhoto.update({
+                clientId,
+                photoId: photo.photoId,
+                watermark: false,
+            });
+        }
     }
 
     return {
-        message: 'Success.',
+        statusCode: 200,
     };
 };
 
-export const main = middyfy(remoweWatermark);
+export const main = remoweWatermark;

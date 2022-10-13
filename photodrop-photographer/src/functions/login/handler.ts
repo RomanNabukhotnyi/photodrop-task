@@ -8,13 +8,13 @@ import { Photographer } from '../../db/entity/photographer';
 
 import schema from './schema';
 
-const generateTokens = (username: string) => {
+const generateTokens = (id: string) => {
     const payload = {
-        username,
+        id,
     };
     const { ACCES_SECRET, REFRESH_SECRET } = process.env;
-    const accessToken = jwt.sign(payload, ACCES_SECRET, { expiresIn: '1d' });
-    const refreshToken = jwt.sign(payload, REFRESH_SECRET, { expiresIn: '30d' });
+    const accessToken = jwt.sign(payload, ACCES_SECRET!, { expiresIn: '1d' });
+    const refreshToken = jwt.sign(payload, REFRESH_SECRET!, { expiresIn: '30d' });
     return {
         accessToken,
         refreshToken,
@@ -22,20 +22,23 @@ const generateTokens = (username: string) => {
 };
 
 const login: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
-    const { username, password } = event.body;
-    const { Item } = await Photographer.get({
-        username,
+    const { password } = event.body;
+    const username = event.body.username.trim();
+    const { Items: [photographer] = [] } = await Photographer.scan({
+        filters: [
+            { attr: 'username', eq: username },
+        ],
     });
-    if (!Item) {
+    if (!photographer) {
         throw new createError.BadRequest('No photographer with this username was found');
     }
-    const isValidPassword = await bcrypt.compare(password, Item.passwordHash);
+    const isValidPassword = await bcrypt.compare(password, photographer.passwordHash);
     if (!isValidPassword) {
         throw new createError.BadRequest('Incorrect password entered');
     }
-    const tokens = generateTokens(username);
+    const tokens = generateTokens(photographer.id);
     await Photographer.update({
-        username: Item.username,
+        id: photographer.id,
         refreshToken: tokens.refreshToken,
     });
     return {

@@ -1,26 +1,41 @@
 import createError from 'http-errors';
+import * as AWS from 'aws-sdk';
+import { APIGatewayEvent, Handler } from 'aws-lambda';
 
 import { middyfy } from '../../libs/lambda';
 import { Client } from '../../db/entity/client';
 
+const S3 = new AWS.S3();
 
-const getClient = async (event) => {
-    const number: string = event.requestContext.authorizer.principalId;
-    const { Item } = await Client.get({
-        number,
+const getClient: Handler<APIGatewayEvent> = async (event) => {
+    const clientId: string = event!.requestContext!.authorizer!.principalId;
+
+    const { Item: client } = await Client.get({
+        id: clientId,
+    }, {
+        attributes: ['number', 'countryCode', 'email', 'fullName', 'selfieKey'],
     });
-    if (!Item) {
+
+    if (!client) {
         throw new createError.NotFound('Client not found.');
     }
-    const selfie = Item.selfie ? `https://${process.env.BUCKET_NAME}.s3.amazonaws.com/${Item.selfie}` : undefined;
+
+    const selfieUrl = client.selfieKey ? S3.getSignedUrl('getObject', {
+        Bucket: process.env.BUCKET_NAME,
+        Key: client.selfieKey,
+        Expires: 86400,
+    }) : undefined;
+
+    const { fullName, email, number, countryCode } = client;
+
     return {
         number: {
-            countryCode: Item.countryCode,
-            phoneNumber: number.replace(Item.countryCode, ''),
+            countryCode,
+            phoneNumber: number.replace(countryCode, ''),
         },
-        name: Item.name,
-        email: Item.email,
-        selfie,
+        fullName,
+        email,
+        selfie: selfieUrl,
     };
 };
 

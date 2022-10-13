@@ -4,19 +4,15 @@
       "module": "commonjs",
       "esModuleInterop": true,
       "moduleResolution": "node",
-      "noUnusedLocals": true,
-      "noUnusedParameters": true,
       "removeComments": true,
       "sourceMap": true,
       "target": "ES2022",
-      "outDir": "lib",
       "baseUrl": "."
     },
-    "include": ["src/**/*.ts", "serverless.ts", "webpack.config.ts"],
+    "include": ["src/**/*.ts", "serverless.ts"],
     "exclude": [
       "node_modules/**/*",
       ".serverless/**/*",
-      ".webpack/**/*",
       ".vscode/**/*"
     ],
     "ts-node": {

@@ -4,47 +4,66 @@ import createError from 'http-errors';
 
 import type { ValidatedEventAPIGatewayProxyEvent } from '../../libs/api-gateway';
 import { middyfy } from '../../libs/lambda';
-import { PhotographerPhotos } from '../../db/entity/photographerPhotos';
+import { Album } from '../../db/entity/album';
 
 import schema from './schema';
 
 const S3 = new AWS.S3();
 
-const getPresignedUrl: ValidatedEventAPIGatewayProxyEvent<
-  typeof schema
-> = async (event) => {
-    const username: string = event.requestContext.authorizer.principalId;
-    const name = decodeURIComponent(event.pathParameters.albumName);
-    const { numbers, amount } = event.body;
-    const { Item: photographerPhotos } = await PhotographerPhotos.get({
-        username,
-        name,
+const getPresignedUrl: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async (event) => {
+    const photographerId: string = event!.requestContext!.authorizer!.principalId;
+    const albumId = event!.pathParameters!.albumId!;
+    const { numbers, contentType, isLast } = event.body;
+    
+    const { Item: album } = await Album.get({
+        photographerId,
+        id: albumId,
     });
-    if (!photographerPhotos) {
-        throw new createError.BadRequest('No album with this name was found');
+
+    if (!album) {
+        throw new createError.BadRequest('Album not found');
     }
 
-    const urls: string[] = [];
-
-    for (let i = 0; i < amount; i++) {
-        const photoKey = `original/${uuid()}.jpg`;
-        const url = S3.getSignedUrl('putObject', {
-            Bucket: process.env.BUCKET_NAME,
-            Key: photoKey,
-            Expires: 3600,
-            ContentType: 'image/jpeg',
-            ACL: 'public-read',
-            Metadata: {
-                username,
-                name,
-                numbers: JSON.stringify(numbers),
-                inform: i == amount - 1 ? 'true' : 'false',
-            },
-        });
-        urls.push(url);
+    let ext: string;
+    
+    switch (contentType) {
+        case 'image/jpeg': 
+            ext = '.jpg';
+            break;
+        case 'image/png': 
+            ext = '.png';
+            break;
+        case 'image/heic': 
+            ext = '.heic';
+            break;
+        case 'image/heif': 
+            ext = '.heif';
+            break;
+        case 'image/webp': 
+            ext = '.webp';
+            break;
+        case 'image/jfif': 
+            ext = '.jfif';
+            break;
+        default: throw new createError.BadRequest('Invalid content type');
     }
 
-    return urls;
+    const photoKey = `original/${uuid()}${ext}`;    
+
+    const url = S3.getSignedUrl('putObject', {
+        Bucket: process.env.BUCKET_NAME,
+        Key: photoKey,
+        Expires: 3600,
+        ContentType: contentType,
+        Metadata: {
+            photographerId,
+            albumId,
+            numbers: JSON.stringify(numbers),
+            inform: isLast ? 'true' : 'false',
+        },
+    });
+
+    return url;
 };
 
 export const main = middyfy(getPresignedUrl, schema);

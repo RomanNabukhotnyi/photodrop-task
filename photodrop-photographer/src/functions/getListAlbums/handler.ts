@@ -1,12 +1,18 @@
-import { middyfy } from '../../libs/lambda';
-import { PhotographerPhotos } from '../../db/entity/photographerPhotos';
+import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 
-const getListAlbums = async (event) => {
-    const username: string = event.requestContext.authorizer.principalId;
-    const { Items } = await PhotographerPhotos.query(username, {
-        attributes: ['name', 'location', 'date'],
+import { middyfy } from '../../libs/lambda';
+import { Album } from '../../db/entity/album';
+
+const getListAlbums: APIGatewayProxyHandlerV2WithJWTAuthorizer<any> = async (event) => {
+    const photographerId: string = event.requestContext.authorizer.principalId;
+
+    const { Items: albums = [] } = await Album.query(photographerId, {
+        attributes: ['id', 'name', 'location', 'date', 'created'],
     });
-    return Items ?? [];
+    // eslint-disable-next-line no-underscore-dangle
+    const sortedAlbums = albums.sort((a: any, b: any) => new Date(b._ct).getTime() - new Date(a._ct).getTime());
+
+    return sortedAlbums;
 };
 
 export const main = middyfy(getListAlbums);

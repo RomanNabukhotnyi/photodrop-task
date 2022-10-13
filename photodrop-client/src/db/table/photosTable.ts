@@ -3,14 +3,15 @@ import { Table } from 'dynamodb-toolbox';
 
 const DocumentClient = new AWS.DynamoDB.DocumentClient();
 
-export const ClientsTable = new Table({
-    name: process.env.CLIENTS_TABLE_NAME,
-    partitionKey: 'id',
+export const PhotosTable = new Table({
+    name: process.env.PHOTOS_TABLE_NAME,
+    partitionKey: 'albumId',
+    sortKey: 'id',
     entityField: false,
     DocumentClient,
     indexes: {
-        NumberIndex: {
-            partitionKey: 'number',
+        IdIndex: {
+            partitionKey: 'id',
         },
     },
 });

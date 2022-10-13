@@ -1,37 +1,37 @@
 service: photodrop-client
 frameworkVersion: "3"
 plugins:
-  - serverless-webpack
+  - serverless-esbuild
   - serverless-offline
 useDotenv: true
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: nodejs16.x
   apiGateway:
     minimumCompressionSize: 1024
     shouldStartNameWithService: true
   environment:
     AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
     NODE_OPTIONS: --enable-source-maps --stack-trace-limit=1000
+    PHOTOGRAPHERS_TABLE_NAME: ${self:custom.photographersTableName}
+    ALBUMS_TABLE_NAME: ${self:custom.albumsTableName}
+    PHOTOS_TABLE_NAME: ${self:custom.photosTableName}
+    PHOTOGRAPHER_CLIENTS_TABLE_NAME: ${self:custom.photographerClientsTableName}
+    CLIENT_PHOTOS_TABLE_NAME: ${self:custom.clientPhotosTableName}
     CLIENTS_TABLE_NAME: ${self:custom.clientsTableName}
     OTPS_TABLE_NAME: ${self:custom.otpsTableName}
-    CLIENT_PHOTOS_TABLE_NAME: ${self:custom.clientPhotosTableName}
     BUCKET_NAME: ${self:custom.bucketName}
-    LAMBDA_ACCESS_POINT_ARN: ${env:LAMBDA_ACCESS_POINT_ARN}
-    PHOTOGRAPHER_BUCKET_NAME: ${self:custom.photographerBucketName}
-    PHOTOGRAPHER_CLIENTS_TABLE_NAME: ${self:custom.photographerClientsTableName}
     SECRET: ${env:SECRET}
     TOKEN: ${env:TOKEN}
     CHAT_ID: ${env:CHAT_ID}
     WATERMARK_URL: ${env:WATERMARK_URL}
-    ACCESS_KEY_ID: ${env:ACCESS_KEY_ID}
-    SECRET_ACCESS_KEY: ${env:SECRET_ACCESS_KEY}
+    STRIPE_SECRET_KEY: ${env:STRIPE_SECRET_KEY}
+    STRIPE_WEBHOOK_SECRET: ${env:STRIPE_WEBHOOK_SECRET}
   iamRoleStatements:
     - Effect: Allow
       Action:
         - s3:*
         - dynamodb:*
-        - s3-object-lambda:*
       Resource: "*"
 
 functions:
@@ -59,7 +59,7 @@ functions:
       events:
         - http:
             path: /getPresignedUrl
-            method: get
+            method: post
             cors: true
             authorizer:
               name: verifyToken
@@ -106,20 +106,28 @@ functions:
       handler: src/functions/removeWatermark/handler.main
       events:
         - http:
-            path: /removeWatermark/{photoKey}
-            method: delete
+            path: /removeWatermark
+            method: post
+            cors: true
+
+    getAlbum:
+      handler: src/functions/getAlbum/handler.main
+      events:
+        - http:
+            path: /albums/{albumId}
+            method: get
             cors: true
             authorizer:
               name: verifyToken
               identitySource: method.request.header.Authorization
               resultTtlInSeconds: 0
 
-    getAlbum:
-      handler: src/functions/getAlbum/handler.main
+    createCheckoutSession:
+      handler: src/functions/createCheckoutSession/handler.main
       events:
         - http:
-            path: /albums/{albumName}
-            method: get
+            path: /createCheckoutSession/{albumId}
+            method: post
             cors: true
             authorizer:
               name: verifyToken
@@ -132,37 +140,29 @@ functions:
         - s3:
             bucket: ${self:custom.bucketName}
             event: s3:ObjectCreated:Put
+            rules:
+              - prefix: selfie/
             existing: true
 
-# package:
-#   individually: true
+package:
+  individually: true
 
 custom:
-  clientsTableName: clients-table
-  otpsTableName: otps-table
-  clientPhotosTableName: client-photo
-  bucketName: photodrop-client-bucket
-  photographerBucketName: photodrop-photos-bucket
-  photographerClientsTableName: photographer-clients-table
-  webpack:
-    webpackConfig: webpack.config.ts
-    includeModules: true
-    packager: npm
+  photographersTableName: photodrop-photographers
+  albumsTableName: photodrop-albums
+  photosTableName: photodrop-photos
+  photographerClientsTableName: photodrop-photographer-clients
+  clientPhotosTableName: photodrop-client-photos
+  clientsTableName: photodrop-clients
+  bucketName: photodrop-bucket
+  otpsTableName: photodrop-otps
+  esbuild:
+    external: ["sharp"]
+    packagerOptions:
+      scripts: ["npm rebuild --arch=x64 --platform=linux sharp"]
 
 resources:
   Resources:
-    ClientsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:custom.clientsTableName}
-        AttributeDefinitions:
-          - AttributeName: number
-            AttributeType: S
-        KeySchema:
-          - AttributeName: number
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-
     OtpsTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -177,10 +177,4 @@ resources:
         TimeToLiveSpecification:
           AttributeName: expiryAt
           Enabled: true
-
-    Bucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: ${self:custom.bucketName}
-        AccessControl: PublicRead
     

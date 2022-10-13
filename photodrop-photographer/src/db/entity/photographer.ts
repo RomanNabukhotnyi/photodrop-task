@@ -6,7 +6,8 @@ export const Photographer = new Entity({
     name: 'Photographer',
     timestamps: false,
     attributes: {
-        username: { partitionKey: true, type: 'string' },
+        id: { partitionKey: true, type: 'string' },
+        username: { required: true, type: 'string' },
         passwordHash: { required: true },
         fullName: { type: 'string' },
         email: { type: 'string' },

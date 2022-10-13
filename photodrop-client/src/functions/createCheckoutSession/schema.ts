@@ -1,15 +1,13 @@
 export default {
     type: 'object',
     properties: {
-        email: {
+        successUrl: {
             type: 'string',
-            format: 'email',
         },
-        fullName: {
+        cancelUrl: {
             type: 'string',
-            pattern: '^[A-Z][a-z]*\\s[A-Z][a-z]*$',
-            maxLength: 100,
         },
     },
+    required: ['successUrl', 'cancelUrl'],
     additionalProperties: false,
 } as const;

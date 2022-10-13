@@ -21,11 +21,14 @@ export default {
                 additionalProperties: false,
             },
         },
-        amount: {
-            type: 'integer',
-            minimum: 1,
+        contentType: {
+            type: 'string',
+            pattern: '^image/\\w+$',
+        },
+        isLast: {
+            type: 'boolean',
         },
     },
-    required: ['numbers', 'amount'],
+    required: ['numbers', 'contentType'],
     additionalProperties: false,
 } as const;
