@@ -2,25 +2,23 @@ service: photodrop-client
 frameworkVersion: "3"
 plugins:
   - serverless-esbuild
-  - serverless-offline
 useDotenv: true
 provider:
   name: aws
+  stage: ${opt:stage, 'dev'}
   runtime: nodejs16.x
   apiGateway:
     minimumCompressionSize: 1024
     shouldStartNameWithService: true
   environment:
-    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
-    NODE_OPTIONS: --enable-source-maps --stack-trace-limit=1000
-    PHOTOGRAPHERS_TABLE_NAME: ${self:custom.photographersTableName}
-    ALBUMS_TABLE_NAME: ${self:custom.albumsTableName}
-    PHOTOS_TABLE_NAME: ${self:custom.photosTableName}
-    PHOTOGRAPHER_CLIENTS_TABLE_NAME: ${self:custom.photographerClientsTableName}
-    CLIENT_PHOTOS_TABLE_NAME: ${self:custom.clientPhotosTableName}
-    CLIENTS_TABLE_NAME: ${self:custom.clientsTableName}
-    OTPS_TABLE_NAME: ${self:custom.otpsTableName}
-    BUCKET_NAME: ${self:custom.bucketName}
+    PHOTOGRAPHERS_TABLE_NAME: photodrop-photographers-${self:provider.stage}
+    ALBUMS_TABLE_NAME: photodrop-albums-${self:provider.stage}
+    PHOTOS_TABLE_NAME: photodrop-photos-${self:provider.stage}
+    PHOTOGRAPHER_CLIENTS_TABLE_NAME: photodrop-photographer-clients-${self:provider.stage}
+    CLIENT_PHOTOS_TABLE_NAME: photodrop-client-photos-${self:provider.stage}
+    CLIENTS_TABLE_NAME: photodrop-clients-${self:provider.stage}
+    OTPS_TABLE_NAME: !Ref OtpsTable
+    BUCKET_NAME: photodrop-photos-bucket-${self:provider.stage}
     SECRET: ${env:SECRET}
     TOKEN: ${env:TOKEN}
     CHAT_ID: ${env:CHAT_ID}
@@ -138,7 +136,7 @@ functions:
       handler: src/functions/updateDb/handler.main
       events:
         - s3:
-            bucket: ${self:custom.bucketName}
+            bucket: ${self:provider.environment.BUCKET_NAME}
             event: s3:ObjectCreated:Put
             rules:
               - prefix: selfie/
@@ -148,14 +146,6 @@ package:
   individually: true
 
 custom:
-  photographersTableName: photodrop-photographers
-  albumsTableName: photodrop-albums
-  photosTableName: photodrop-photos
-  photographerClientsTableName: photodrop-photographer-clients
-  clientPhotosTableName: photodrop-client-photos
-  clientsTableName: photodrop-clients
-  bucketName: photodrop-bucket
-  otpsTableName: photodrop-otps
   esbuild:
     external: ["sharp"]
     packagerOptions:
@@ -166,7 +156,7 @@ resources:
     OtpsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.otpsTableName}
+        TableName: photodrop-otps-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: number
             AttributeType: S

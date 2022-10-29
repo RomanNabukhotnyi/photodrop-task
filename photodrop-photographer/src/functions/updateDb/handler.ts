@@ -140,8 +140,8 @@ const updateDb: Handler<S3CreateEvent> = async (event) => {
 
     if (photographerId && albumId && numbers) {
         await Photo.put({
-            albumId,
             id: photoId,
+            albumId,
         });
     
         for (const number of JSON.parse(numbers)) {

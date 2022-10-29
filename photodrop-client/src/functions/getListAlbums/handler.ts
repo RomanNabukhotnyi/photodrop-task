@@ -60,7 +60,6 @@ const getListAlbums: Handler<APIGatewayEvent> = async (event) => {
         url300: string,
     }>>(async albumId => {
         const { Items: [album] = [] } = await Album.query(albumId.id, {
-            index: 'IdIndex',
             attributes: ['id', 'name', 'location', 'date', 'created'],
         });
         return {

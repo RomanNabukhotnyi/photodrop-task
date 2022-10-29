@@ -26,7 +26,6 @@ const getAlbum: Handler<APIGatewayEvent> = async (event) => {
     const sortedPhoto = photos.sort((a: any, b: any) => new Date(b._ct).getTime() - new Date(a._ct).getTime());
 
     const { Items: [album] = [] } = await Album.query(albumId, {
-        index: 'IdIndex',
         attributes: ['id', 'name', 'location', 'date'],
     });
 

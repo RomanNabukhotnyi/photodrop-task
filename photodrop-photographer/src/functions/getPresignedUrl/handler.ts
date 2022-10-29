@@ -16,8 +16,8 @@ const getPresignedUrl: ValidatedEventAPIGatewayProxyEvent<typeof schema> = async
     const { numbers, contentType, isLast } = event.body;
     
     const { Item: album } = await Album.get({
-        photographerId,
         id: albumId,
+        photographerId,
     });
 
     if (!album) {

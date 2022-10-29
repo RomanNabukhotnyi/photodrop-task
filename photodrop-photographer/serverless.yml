@@ -2,22 +2,22 @@ service: photodrop-photographer
 frameworkVersion: "3"
 plugins:
   - serverless-esbuild
-  - serverless-offline
 useDotenv: true
 provider:
   name: aws
+  stage: ${opt:stage, 'dev'}
   runtime: nodejs16.x
   apiGateway:
     minimumCompressionSize: 1024
     shouldStartNameWithService: true
   environment:
-    PHOTOGRAPHERS_TABLE_NAME: ${self:custom.photographersTableName}
-    ALBUMS_TABLE_NAME: ${self:custom.albumsTableName}
-    PHOTOS_TABLE_NAME: ${self:custom.photosTableName}
-    PHOTOGRAPHER_CLIENTS_TABLE_NAME: ${self:custom.photographerClientsTableName}
-    CLIENT_PHOTOS_TABLE_NAME: ${self:custom.clientPhotosTableName}
-    CLIENTS_TABLE_NAME: ${self:custom.clientsTableName}
-    BUCKET_NAME: ${self:custom.bucketName}
+    PHOTOGRAPHERS_TABLE_NAME: !Ref PhotographersTable
+    ALBUMS_TABLE_NAME: !Ref AlbumsTable
+    PHOTOS_TABLE_NAME: !Ref PhotosTable
+    PHOTOGRAPHER_CLIENTS_TABLE_NAME: !Ref PhotographerClientsTable
+    CLIENT_PHOTOS_TABLE_NAME: !Ref ClientPhotosTable
+    CLIENTS_TABLE_NAME: !Ref ClientsTable
+    BUCKET_NAME: !Ref Bucket
     ACCES_SECRET: ${env:ACCES_SECRET}
     REFRESH_SECRET: ${env:REFRESH_SECRET}
     TOKEN: ${env:TOKEN}
@@ -127,7 +127,7 @@ functions:
       timeout: 300
       events:
         - s3:
-            bucket: ${self:custom.bucketName}
+            bucket: !Ref Bucket
             event: s3:ObjectCreated:Put
             rules:
               - prefix: original/
@@ -137,13 +137,6 @@ package:
   individually: true
 
 custom:
-  photographersTableName: photodrop-photographers
-  albumsTableName: photodrop-albums
-  photosTableName: photodrop-photos
-  photographerClientsTableName: photodrop-photographer-clients
-  clientPhotosTableName: photodrop-client-photos
-  clientsTableName: photodrop-clients
-  bucketName: photodrop-bucket
   esbuild:
     external: ["sharp"]
     packagerOptions:
@@ -154,7 +147,7 @@ resources:
     PhotographersTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.photographersTableName}
+        TableName: photodrop-photographers-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -166,21 +159,21 @@ resources:
     AlbumsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.albumsTableName}
+        TableName: photodrop-albums-${self:provider.stage}
         AttributeDefinitions:
-          - AttributeName: photographerId
-            AttributeType: S
           - AttributeName: id
+            AttributeType: S
+          - AttributeName: photographerId
             AttributeType: S
         KeySchema:
-          - AttributeName: photographerId
-            KeyType: HASH
           - AttributeName: id
+            KeyType: HASH
+          - AttributeName: photographerId
             KeyType: RANGE
         GlobalSecondaryIndexes:
-          - IndexName: IdIndex
+          - IndexName: photographerIdIndex
             KeySchema:
-              - AttributeName: id
+              - AttributeName: photographerId
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
@@ -189,7 +182,7 @@ resources:
     PhotographerClientsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.photographerClientsTableName}
+        TableName: photodrop-photographer-clients-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: photographerId
             AttributeType: S
@@ -205,7 +198,7 @@ resources:
     ClientsTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.clientsTableName}
+        TableName: photodrop-clients-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -226,21 +219,21 @@ resources:
     PhotosTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.photosTableName}
+        TableName: photodrop-photos-${self:provider.stage}
         AttributeDefinitions:
-          - AttributeName: albumId
-            AttributeType: S
           - AttributeName: id
+            AttributeType: S
+          - AttributeName: albumId
             AttributeType: S
         KeySchema:
-          - AttributeName: albumId
-            KeyType: HASH
           - AttributeName: id
+            KeyType: HASH
+          - AttributeName: albumId
             KeyType: RANGE
         GlobalSecondaryIndexes:
-          - IndexName: IdIndex
+          - IndexName: albumIdIndex
             KeySchema:
-              - AttributeName: id
+              - AttributeName: albumId
                 KeyType: HASH
             Projection:
               ProjectionType: ALL
@@ -249,7 +242,7 @@ resources:
     ClientPhotosTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.clientPhotosTableName}
+        TableName: photodrop-client-photos-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: clientId
             AttributeType: S
@@ -274,5 +267,5 @@ resources:
     Bucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: ${self:custom.bucketName}
+        BucketName: photodrop-photos-bucket-${self:provider.stage}
         AccessControl: PublicReadWrite

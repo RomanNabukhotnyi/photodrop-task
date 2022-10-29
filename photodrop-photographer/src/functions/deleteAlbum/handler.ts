@@ -12,15 +12,15 @@ const S3 = new AWS.S3();
 const deleteAlbum: APIGatewayProxyHandlerV2<any> = async (event) => {
     const albumId = event!.pathParameters!.albumId!;
     
-    const { Items: [album] = [] } = await Album.query(albumId, {
-        index: 'IdIndex',
-    });
+    const { Items: [album] = [] } = await Album.query(albumId);
 
     if (!album) {
         throw new createError.BadRequest('Album not found');
     }
 
-    const { Items: photos = [] } = await Photo.query(albumId);
+    const { Items: photos = [] } = await Photo.query(albumId, {
+        index: 'albumIdIndex',
+    });
     
     for (const photo of photos) {
         await S3.deleteObject({
@@ -66,8 +66,8 @@ const deleteAlbum: APIGatewayProxyHandlerV2<any> = async (event) => {
         })));
     }
     await Album.delete({
-        photographerId: album.photographerId,
         id: albumId,
+        photographerId: album.photographerId,
     });
 
     return {

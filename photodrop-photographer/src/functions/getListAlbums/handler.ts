@@ -7,6 +7,7 @@ const getListAlbums: APIGatewayProxyHandlerV2WithJWTAuthorizer<any> = async (eve
     const photographerId: string = event.requestContext.authorizer.principalId;
 
     const { Items: albums = [] } = await Album.query(photographerId, {
+        index: 'photographerIdIndex',
         attributes: ['id', 'name', 'location', 'date', 'created'],
     });
     // eslint-disable-next-line no-underscore-dangle

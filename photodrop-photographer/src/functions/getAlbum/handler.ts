@@ -10,8 +10,8 @@ const getAlbum: APIGatewayProxyHandlerV2WithJWTAuthorizer<any> = async (event) =
     const albumId = event!.pathParameters!.albumId!;
 
     const { Item: album } = await Album.get({
-        photographerId,
         id: albumId,
+        photographerId,
     }, {
         attributes: ['id', 'name', 'location', 'date'],
     });
@@ -20,7 +20,9 @@ const getAlbum: APIGatewayProxyHandlerV2WithJWTAuthorizer<any> = async (event) =
         throw new createError.BadRequest('Album not found');
     }
 
-    const { Count: countPhotos } = await Photo.query(albumId);
+    const { Count: countPhotos } = await Photo.query(albumId, {
+        index: 'albumIdIndex',
+    });
 
     return {
         ...album,

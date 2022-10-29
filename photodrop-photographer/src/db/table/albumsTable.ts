@@ -5,13 +5,13 @@ const DocumentClient = new AWS.DynamoDB.DocumentClient();
 
 export const AlbumsTable = new Table({
     name: process.env.ALBUMS_TABLE_NAME,
-    partitionKey: 'photographerId',
-    sortKey: 'id',
+    partitionKey: 'id',
+    sortKey: 'photographerId',
     entityField: false,
     DocumentClient,
     indexes: {
-        IdIndex: {
-            partitionKey: 'id',
+        photographerIdIndex: {
+            partitionKey: 'photographerId',
         },
     },
 });

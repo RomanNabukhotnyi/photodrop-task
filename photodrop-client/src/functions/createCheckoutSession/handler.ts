@@ -28,7 +28,6 @@ const createCheckoutSession: ValidatedEventAPIGatewayProxyEvent<typeof schema> =
     }
 
     const { Items: [album] = [] } = await Album.query(albumId, {
-        index: 'IdIndex',
         attributes: ['id', 'name', 'location', 'date'],
     });
 

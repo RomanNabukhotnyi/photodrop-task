@@ -1,15 +1,14 @@
 {
     "compilerOptions": {
-      "lib": ["ESNext"],
+      "lib": ["ES2015"],
       "module": "commonjs",
       "esModuleInterop": true,
       "moduleResolution": "node",
       "removeComments": true,
-      "sourceMap": true,
-      "target": "ES2022",
+      "target": "ES5",
       "baseUrl": "."
     },
-    "include": ["src/**/*.ts", "serverless.ts"],
+    "include": ["src/**/*.ts"],
     "exclude": [
       "node_modules/**/*",
       ".serverless/**/*",
